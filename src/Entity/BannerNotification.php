@@ -23,7 +23,7 @@ class BannerNotification extends AbstractNotification
     protected $transition = 'fade';
 
     /**
-     * @ORM\Column(type="integer", nullable=true, options={"comment": "Banner only: milliseconds between rotations"})
+     * @ORM\Column(name="intervalMs", type="integer", nullable=true, options={"comment": "Banner only: milliseconds between rotations"})
      */
     protected $interval = self::DEFAULT_INTERVAL;
 

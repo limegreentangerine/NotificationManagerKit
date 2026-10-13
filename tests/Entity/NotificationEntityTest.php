@@ -6,7 +6,7 @@ namespace NotificationManagerKit\Tests\Entity;
 
 use PHPUnit\Framework\TestCase;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
-use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, NotificationPage, PopupNotification, Settings};
+use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, NotificationContent, NotificationPage, PopupNotification, Settings};
 
 final class NotificationEntityTest extends TestCase
 {
@@ -54,6 +54,32 @@ final class NotificationEntityTest extends TestCase
                 }
             }
         }
+    }
+
+    /**
+     * Doctrine does not quote identifiers, so a column called `interval` (reserved in MySQL) made every banner insert fail
+     * with a syntax error that no unit test noticed. Check every mapped table and column name against MySQL's keywords.
+     */
+    public function testNoMappedTableOrColumnIsAMysqlReservedWord(): void
+    {
+        $keywords = new \Doctrine\DBAL\Platforms\Keywords\MySQL80Keywords();
+        $reserved = [];
+
+        foreach ([AbstractNotification::class, BannerNotification::class, PopupNotification::class, NotificationContent::class, NotificationPage::class, Settings::class] as $class) {
+            $meta = $this->metadata($class);
+
+            if ($keywords->isKeyword($meta->getTableName())) {
+                $reserved[] = $meta->getTableName();
+            }
+
+            foreach ($meta->getColumnNames() as $column) {
+                if ($keywords->isKeyword($column)) {
+                    $reserved[] = $meta->getTableName() . '.' . $column;
+                }
+            }
+        }
+
+        $this->assertSame([], array_values(array_unique($reserved)), 'reserved words must be mapped to a different column name');
     }
 
     public function testSettingsAndContentTablesAreMapped(): void
@@ -104,6 +130,23 @@ final class NotificationEntityTest extends TestCase
         $n->setPageIds([4]);
         $this->assertSame([4], $n->getPageIds());
         $this->assertTrue((new BannerNotification())->isVisibleOnPageId(123));
+    }
+
+    public function testPriorityValidation(): void
+    {
+        foreach ([null, '', '0', '-1000', '1000', ' 5 ', 7, -1000, 1000] as $ok) {
+            $this->assertTrue(AbstractNotification::isValidPriority($ok), var_export($ok, true));
+        }
+
+        foreach (['1001', '-1001', 1001, -1001, '99999', '1.5', 'abc', '1e3', '<script>', [], 1.5] as $bad) {
+            $this->assertFalse(AbstractNotification::isValidPriority($bad), var_export($bad, true));
+        }
+    }
+
+    public function testStoredPriorityIsAlwaysClamped(): void
+    {
+        $this->assertSame(1000, (new BannerNotification())->setPriority(5000)->getPriority());
+        $this->assertSame(-1000, (new PopupNotification())->setPriority(-5000)->getPriority());
     }
 
     public function testBannerOptionsAreClamped(): void

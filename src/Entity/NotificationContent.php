@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Concrete\Core\Entity\File\File;
 use Concrete\Core\Editor\LinkAbstractor;
 use ClassKit\Entity\Core\UpdatedGuidEntity;
-use NotificationManagerKit\Support\Sanitizer;
+use NotificationManagerKit\Support\{LinkResolver, Sanitizer};
 
 /**
  * One locale's worth of text (and popup image) for a notification.
@@ -54,6 +54,22 @@ class NotificationContent extends UpdatedGuidEntity
      * @ORM\Column(type="integer", nullable=true, options={"comment": "Linked page cID"})
      */
     protected $linkCID = null;
+
+    /**
+     * @ORM\Column(type="string", length=16, nullable=true, options={"comment": "Link type: none, page, file, url, phone or email. Null on rows saved before link types existed"})
+     */
+    protected $linkType = null;
+
+    /**
+     * @ORM\Column(type="string", length=2000, nullable=true, options={"comment": "Typed link target for the url, phone and email types"})
+     */
+    protected $linkValue = null;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="Concrete\Core\Entity\File\File")
+     * @ORM\JoinColumn(name="linkFID", referencedColumnName="fID", onDelete="SET NULL", nullable=true)
+     */
+    protected $linkFile = null;
 
     public function getLanguage(): string
     {
@@ -127,6 +143,70 @@ class NotificationContent extends UpdatedGuidEntity
         $this->linkCID = $linkCID > 0 ? $linkCID : null;
 
         return $this;
+    }
+
+    /**
+     * Rows saved before link types existed only have a page, so a missing type is read as "page" or "none".
+     */
+    public function getLinkType(): string
+    {
+        if ($this->linkType === null || !LinkResolver::isValidType($this->linkType)) {
+            return $this->linkCID !== null ? LinkResolver::TYPE_PAGE : LinkResolver::TYPE_NONE;
+        }
+
+        return $this->linkType;
+    }
+
+    public function setLinkType(?string $linkType): self
+    {
+        $this->linkType = LinkResolver::isValidType((string) $linkType) ? $linkType : LinkResolver::TYPE_NONE;
+
+        return $this;
+    }
+
+    public function getLinkValue(): string
+    {
+        return (string) $this->linkValue;
+    }
+
+    public function setLinkValue(?string $linkValue): self
+    {
+        $linkValue = trim((string) $linkValue);
+        $this->linkValue = $linkValue === '' ? null : mb_substr($linkValue, 0, 2000);
+
+        return $this;
+    }
+
+    public function getLinkFile(): File|false
+    {
+        if ($this->linkFile === null) {
+            return false;
+        }
+
+        $file = $this->linkFile instanceof File ? $this->linkFile : \Concrete\Core\File\File::getByID((int) $this->linkFile);
+
+        return ($file instanceof File && !$file->isError()) ? $file : false;
+    }
+
+    public function setLinkFile(?File $file): self
+    {
+        $this->linkFile = $file;
+
+        return $this;
+    }
+
+    /**
+     * Whether what was entered for the chosen type can produce a link. A type of "none" is always fine.
+     * Page and file links need the picker to have supplied something; the typed types must pass LinkResolver.
+     */
+    public function hasValidLink(): bool
+    {
+        return match ($this->getLinkType()) {
+            LinkResolver::TYPE_NONE => true,
+            LinkResolver::TYPE_PAGE => $this->linkCID !== null,
+            LinkResolver::TYPE_FILE => $this->linkFile !== null,
+            default => LinkResolver::href($this->getLinkType(), $this->linkValue) !== null,
+        };
     }
 
     public function getPage(): Page|false

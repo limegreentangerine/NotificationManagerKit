@@ -13,6 +13,7 @@ if (in_array($controller->getTask(), ['add', 'details', 'save'], true)) {
             'transitions' => $transitions,
             'frequencies' => $frequencies,
             'scrollUnits' => $scrollUnits,
+            'linkTypes' => $linkTypes,
             'h' => [
                 'al' => $concrete_asset_library,
                 'ps' => $form_page_selector,

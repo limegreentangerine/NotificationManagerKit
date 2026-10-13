@@ -3,11 +3,12 @@
 defined('C5_EXECUTE') or die('Access Denied.');
 
 use NotificationManagerKit\Support\Output as O;
+use NotificationManagerKit\Entity\AbstractNotification;
 
 /**
  * @var array<string, mixed> $v form values (never trusted: everything is escaped where it is output)
  */
-$form = \Core::make('form/helper');
+$form = \Core::make('helper/form');
 $editor = Core::make('editor');
 $editor->setAllowFileManager(false);
 ?>
@@ -65,7 +66,7 @@ $editor->setAllowFileManager(false);
 
         <div class="form-group mb-3">
             <?php echo $form->label('priority', t('Priority')) ?>
-            <?php echo $form->number('priority', (int) $v['priority'], ['min' => -1000, 'max' => 1000]) ?>
+            <?php echo $form->number('priority', (int) $v['priority'], ['min' => AbstractNotification::MIN_PRIORITY, 'max' => AbstractNotification::MAX_PRIORITY]) ?>
             <div class="help-block form-text"><?php echo t('Higher is shown first. When several popups are eligible, only the highest priority is shown.') ?></div>
         </div>
     </fieldset>
@@ -202,15 +203,43 @@ $editor->setAllowFileManager(false);
                 <?php echo $editor->outputStandardEditor('content[' . $lang . ']', O::e($c['content'])) ?>
             </div>
 
-            <div class="form-group mb-3">
-                <?php echo $form->label('linkCID[' . $lang . ']', t('Linked Page (%s)', O::e($label))) ?>
-                <?php echo $h['ps']->selectPage('linkCID[' . $lang . ']', $c['linkCID'] ?: false) ?>
-            </div>
+            <div data-nm-link>
+                <div class="form-group mb-3">
+                    <?php echo $form->label('linkType[' . $lang . ']', t('Link (%s)', O::e($label))) ?>
+                    <?php echo $form->select('linkType[' . $lang . ']', $linkTypes, $c['linkType'], ['data-nm-link-type' => '']) ?>
+                </div>
 
-            <div class="form-group mb-3">
-                <?php echo $form->label('linkText[' . $lang . ']', t('Link Text (%s)', O::e($label))) ?>
-                <?php echo $form->text('linkText[' . $lang . ']', $c['linkText'], ['maxlength' => 255]) ?>
-                <div class="help-block form-text"><?php echo t('Leave blank to use the linked page\'s name.') ?></div>
+                <div class="form-group mb-3" data-nm-link-field="page">
+                    <?php echo $form->label('linkCID[' . $lang . ']', t('Linked Page (%s)', O::e($label))) ?>
+                    <?php echo $h['ps']->selectPage('linkCID[' . $lang . ']', $c['linkCID'] ?: false) ?>
+                </div>
+
+                <div class="form-group mb-3" data-nm-link-field="file">
+                    <?php echo $form->label('linkFID_' . $lang, t('Linked File (%s)', O::e($label))) ?>
+                    <?php echo $h['al']->file('linkFID_' . $lang, 'linkFID[' . $lang . ']', t('Choose File'), $c['linkFile'] ?: null) ?>
+                </div>
+
+                <div class="form-group mb-3" data-nm-link-field="url">
+                    <?php echo $form->label('linkUrl_' . $lang, t('Web Address (%s)', O::e($label))) ?>
+                    <?php echo $form->text('linkValue[' . $lang . ']', $c['linkValue'], ['id' => 'linkUrl_' . $lang, 'maxlength' => 2000, 'placeholder' => 'https://example.com', 'inputmode' => 'url', 'autocomplete' => 'off']) ?>
+                    <div class="help-block form-text"><?php echo t('Must start with http:// or https://, or be a plain domain like example.com.') ?></div>
+                </div>
+
+                <div class="form-group mb-3" data-nm-link-field="phone">
+                    <?php echo $form->label('linkPhone_' . $lang, t('Phone Number (%s)', O::e($label))) ?>
+                    <?php echo $form->telephone('linkValue[' . $lang . ']', $c['linkValue'], ['id' => 'linkPhone_' . $lang, 'maxlength' => 40, 'placeholder' => '+44 1234 567890']) ?>
+                </div>
+
+                <div class="form-group mb-3" data-nm-link-field="email">
+                    <?php echo $form->label('linkEmail_' . $lang, t('Email Address (%s)', O::e($label))) ?>
+                    <?php echo $form->email('linkValue[' . $lang . ']', $c['linkValue'], ['id' => 'linkEmail_' . $lang, 'maxlength' => 254, 'placeholder' => 'hello@example.com']) ?>
+                </div>
+
+                <div class="form-group mb-3" data-nm-link-field="text">
+                    <?php echo $form->label('linkText[' . $lang . ']', t('Link Text (%s)', O::e($label))) ?>
+                    <?php echo $form->text('linkText[' . $lang . ']', $c['linkText'], ['maxlength' => 255]) ?>
+                    <div class="help-block form-text"><?php echo t('Leave blank to use the page or file name, the phone number, the email address, or the website\'s domain.') ?></div>
+                </div>
             </div>
         </fieldset>
     <?php } ?>

@@ -5,8 +5,8 @@ namespace Concrete\Package\NotificationManagerKit\Controller\SinglePage\Dashboar
 use Concrete\Core\Asset\AssetList;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Entity\File\File as FileEntity;
-use NotificationManagerKit\Support\{Catalog, Schedule};
 use Concrete\Core\Page\Controller\DashboardPageController;
+use NotificationManagerKit\Support\{Catalog, LinkResolver, Schedule};
 use Concrete\Package\NotificationManagerKit\Controller\Search\Notifications as SearchController;
 use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, NotificationContent, PopupNotification, Settings};
 
@@ -44,6 +44,7 @@ class Notifications extends DashboardPageController
         $this->set('transitions', array_map(fn($label) => t($label), BannerNotification::TRANSITIONS));
         $this->set('frequencies', array_map(fn($label) => t($label), PopupNotification::FREQUENCIES));
         $this->set('scrollUnits', array_map(fn($label) => t($label), PopupNotification::SCROLL_UNITS));
+        $this->set('linkTypes', array_map(fn($label) => t($label), LinkResolver::TYPES));
     }
 
     protected function validate(array $post, string $type): void
@@ -57,6 +58,10 @@ class Notifications extends DashboardPageController
 
         if (!$strings->notempty(strip_tags((string) ($post['content'][$required] ?? ''), '<img><video><iframe>'))) {
             $this->error->add(t('Please enter some content for the %s locale.', $required));
+        }
+
+        if (!AbstractNotification::isValidPriority($post['priority'] ?? null)) {
+            $this->error->add(t('Priority must be a whole number between %s and %s.', AbstractNotification::MIN_PRIORITY, AbstractNotification::MAX_PRIORITY));
         }
 
         $dates = $this->app->make('helper/form/date_time');
@@ -75,9 +80,50 @@ class Notifications extends DashboardPageController
             $this->error->add(t('Choose at least one page, or show on all pages.'));
         }
 
+        $this->validateLinks($post);
+
         if ($type === AbstractNotification::TYPE_POPUP) {
             $this->validatePopup($post);
         }
+    }
+
+    /**
+     * Each locale's link must be complete for the type chosen: a picked page or file, or a typed value that validates.
+     */
+    protected function validateLinks(array $post): void
+    {
+        foreach ($this->locales as $locale) {
+            $lang = $locale->getLanguage();
+            $label = $locale->getLanguageText();
+            $type = $this->postedLinkType($post, $lang);
+
+            $message = match ($type) {
+                LinkResolver::TYPE_PAGE => empty($post['linkCID'][$lang]) ? t('Choose a page for the link (%s).', $label) : null,
+                LinkResolver::TYPE_FILE => empty($post['linkFID'][$lang]) ? t('Choose a file for the link (%s).', $label) : null,
+                LinkResolver::TYPE_URL => LinkResolver::url($post['linkValue'][$lang] ?? '') === null ? t('Enter a valid web address for the link (%s), eg. https://example.com.', $label) : null,
+                LinkResolver::TYPE_PHONE => LinkResolver::phone($post['linkValue'][$lang] ?? '') === null ? t('Enter a valid phone number for the link (%s), eg. +44 1234 567890.', $label) : null,
+                LinkResolver::TYPE_EMAIL => LinkResolver::email($post['linkValue'][$lang] ?? '') === null ? t('Enter a valid email address for the link (%s).', $label) : null,
+                default => null,
+            };
+
+            if ($message !== null) {
+                $this->error->add($message);
+            }
+        }
+    }
+
+    protected function postedLinkType(array $post, string $lang): string
+    {
+        $type = (string) ($post['linkType'][$lang] ?? '');
+
+        return LinkResolver::isValidType($type) ? $type : LinkResolver::TYPE_NONE;
+    }
+
+    protected function fileById(mixed $id): ?FileEntity
+    {
+        $id = (int) $id;
+
+        return $id > 0 ? $this->entityManager->find(FileEntity::class, $id) : null;
     }
 
     protected function validatePopup(array $post): void
@@ -141,7 +187,6 @@ class Notifications extends DashboardPageController
                 ->setDismissible(isset($post['dismissible']));
         }
 
-        $images = [];
         if ($entity instanceof PopupNotification) {
             $entity->setFrequency($post['frequency'] ?? '')
                 ->setTriggerOnLoad(isset($post['triggerOnLoad']))
@@ -154,12 +199,17 @@ class Notifications extends DashboardPageController
                 ->setTriggerOnClick(isset($post['triggerOnClick']))
                 ->setTriggerClickSelector($post['triggerClickSelector'] ?? '');
 
-            // All the posted images in one query rather than one per locale.
-            $imageIds = array_values(array_unique(array_filter(array_map('intval', (array) ($post['image'] ?? [])))));
-            if ($imageIds !== []) {
-                foreach ($this->entityManager->getRepository(FileEntity::class)->findBy(['fID' => $imageIds]) as $file) {
-                    $images[$file->getFileID()] = $file;
-                }
+        }
+
+        // Every posted image and link file in one query rather than one per locale.
+        $files = [];
+        $fileIds = array_values(array_unique(array_filter(array_map('intval', [
+            ...(array) ($post['image'] ?? []),
+            ...(array) ($post['linkFID'] ?? []),
+        ]))));
+        if ($fileIds !== []) {
+            foreach ($this->entityManager->getRepository(FileEntity::class)->findBy(['fID' => $fileIds]) as $file) {
+                $files[$file->getFileID()] = $file;
             }
         }
 
@@ -167,13 +217,19 @@ class Notifications extends DashboardPageController
             $lang = $locale->getLanguage();
             $content = $entity->getContent($lang) ?: (new NotificationContent())->setLanguage($lang);
 
+            $linkType = $this->postedLinkType($post, $lang);
+
+            // Only the field that belongs to the chosen type is kept; the others are cleared.
             $content->setName((string) ($post['name'][$lang] ?? ''))
                 ->setContent((string) ($post['content'][$lang] ?? ''))
-                ->setLinkText((string) ($post['linkText'][$lang] ?? ''))
-                ->setLinkCID($post['linkCID'][$lang] ?? null);
+                ->setLinkType($linkType)
+                ->setLinkText($linkType === LinkResolver::TYPE_NONE ? '' : (string) ($post['linkText'][$lang] ?? ''))
+                ->setLinkCID($linkType === LinkResolver::TYPE_PAGE ? ($post['linkCID'][$lang] ?? null) : null)
+                ->setLinkFile($linkType === LinkResolver::TYPE_FILE ? ($files[(int) ($post['linkFID'][$lang] ?? 0)] ?? null) : null)
+                ->setLinkValue(in_array($linkType, LinkResolver::TEXT_TYPES, true) ? (string) ($post['linkValue'][$lang] ?? '') : null);
 
             if ($entity instanceof PopupNotification) {
-                $content->setImage($images[(int) ($post['image'][$lang] ?? 0)] ?? null);
+                $content->setImage($files[(int) ($post['image'][$lang] ?? 0)] ?? null);
             }
 
             $this->entityManager->persist($content);
@@ -233,7 +289,10 @@ class Notifications extends DashboardPageController
                 'content' => (string) ($post['content'][$lang] ?? $content?->getContent(true) ?? ''),
                 'linkText' => (string) ($post['linkText'][$lang] ?? $content?->getLinkText() ?? ''),
                 'linkCID' => (int) ($post['linkCID'][$lang] ?? $content?->getLinkCID() ?? 0),
-                'image' => $content ? $content->getImage() : false,
+                'linkType' => $post !== null ? $this->postedLinkType($post, $lang) : ($content?->getLinkType() ?? LinkResolver::TYPE_NONE),
+                'linkValue' => (string) ($post['linkValue'][$lang] ?? $content?->getLinkValue() ?? ''),
+                'linkFile' => $post !== null ? ($this->fileById($post['linkFID'][$lang] ?? 0) ?: false) : ($content ? $content->getLinkFile() : false),
+                'image' => $post !== null ? ($this->fileById($post['image'][$lang] ?? 0) ?: false) : ($content ? $content->getImage() : false),
             ];
         }
 
@@ -244,7 +303,8 @@ class Notifications extends DashboardPageController
     {
         parent::on_start();
 
-        $this->locales = $this->app->make('site')->getActiveSiteForEditing()->getLocales();
+        // getLocales() is a Doctrine collection; a plain array works with array_map() and the views alike.
+        $this->locales = array_values($this->app->make('site')->getActiveSiteForEditing()->getLocales()->toArray());
         $this->set('locales', $this->locales);
         $this->set('types', [
             AbstractNotification::TYPE_BANNER => t('Banner'),

@@ -32,6 +32,9 @@ abstract class AbstractNotification extends UpdatedGuidEntity
     public const TYPE_BANNER = 'banner';
     public const TYPE_POPUP = 'popup';
 
+    public const MIN_PRIORITY = -1000;
+    public const MAX_PRIORITY = 1000;
+
     public const DISPLAY_SCOPES = [
         'all' => 'All Pages',
         'specific' => 'Specific Pages',
@@ -185,6 +188,23 @@ abstract class AbstractNotification extends UpdatedGuidEntity
         return $this;
     }
 
+    /**
+     * Whether a submitted priority is acceptable: blank (meaning 0), or a whole number within the allowed range.
+     * setPriority() still clamps, so a stored value can never be out of range even if this check is skipped.
+     */
+    public static function isValidPriority(mixed $priority): bool
+    {
+        if ($priority === null || $priority === '') {
+            return true;
+        }
+
+        if (is_int($priority) || (is_string($priority) && preg_match('/^-?\d+$/', trim($priority)))) {
+            return (int) $priority >= self::MIN_PRIORITY && (int) $priority <= self::MAX_PRIORITY;
+        }
+
+        return false;
+    }
+
     public function getPriority(): int
     {
         return (int) $this->priority;
@@ -192,7 +212,7 @@ abstract class AbstractNotification extends UpdatedGuidEntity
 
     public function setPriority($priority): self
     {
-        $this->priority = max(-1000, min(1000, (int) $priority));
+        $this->priority = max(self::MIN_PRIORITY, min(self::MAX_PRIORITY, (int) $priority));
 
         return $this;
     }

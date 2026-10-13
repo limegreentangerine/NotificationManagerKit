@@ -54,15 +54,45 @@ final class Catalog
         );
     }
 
+    /**
+     * The href and visible text for a content row's link, whatever its type. An empty URL means there is no link:
+     * a page or file that has gone, or a typed value that doesn't validate.
+     *
+     * @return array{string, string} [url, text]
+     */
+    private static function link(\NotificationManagerKit\Entity\NotificationContent $content): array
+    {
+        $type = $content->getLinkType();
+        $text = $content->getLinkText();
+
+        switch ($type) {
+            case LinkResolver::TYPE_PAGE:
+                $page = $content->getPage();
+                $url = $page ? (string) $page->getCollectionLink() : '';
+                $default = $page ? (string) $page->getCollectionName() : '';
+                break;
+            case LinkResolver::TYPE_FILE:
+                $file = $content->getLinkFile();
+                $version = $file ? $file->getApprovedVersion() : null;
+                $url = $version ? (string) $version->getDownloadURL() : '';
+                $default = $version ? Sanitizer::text((string) $version->getTitle()) : '';
+                break;
+            case LinkResolver::TYPE_URL:
+            case LinkResolver::TYPE_PHONE:
+            case LinkResolver::TYPE_EMAIL:
+                $url = (string) LinkResolver::href($type, $content->getLinkValue());
+                $default = $url !== '' ? LinkResolver::defaultText($type, $content->getLinkValue()) : '';
+                break;
+            default:
+                return ['', ''];
+        }
+
+        return [$url, $url !== '' && $text === '' ? $default : $text];
+    }
+
     private static function view(AbstractNotification $notification, \NotificationManagerKit\Entity\NotificationContent $content): ?NotificationView
     {
-        $page = $content->getPage();
-        $linkText = $content->getLinkText();
-
-        if ($page) {
-            $linkUrl = (string) $page->getCollectionLink();
-            $linkText = $linkText !== '' ? $linkText : (string) $page->getCollectionName();
-        }
+        [$linkUrl, $linkText] = self::link($content);
 
         $options = [];
         $image = null;
@@ -111,7 +141,7 @@ final class Catalog
             $notification->getPageIds(),
             $content->getName(),
             $content->getContent(),
-            $linkUrl ?? '',
+            $linkUrl,
             $linkText,
             $image,
             $options,

@@ -28,6 +28,30 @@
 		type?.addEventListener('change', update);
 		scope?.addEventListener('change', update);
 		update();
+
+		form.querySelectorAll('[data-nm-link]').forEach(initLink);
+	}
+
+	/** Show only the link field that belongs to the chosen link type (and the link text unless there is no link). */
+	function initLink(group) {
+		const select = group.querySelector('[data-nm-link-type]');
+		if (!select) return;
+
+		const update = () => {
+			group.querySelectorAll('[data-nm-link-field]').forEach((field) => {
+				const kind = field.dataset.nmLinkField;
+				const show = kind === 'text' ? select.value !== 'none' : kind === select.value;
+
+				field.classList.toggle('d-none', !show);
+				// A hidden typed field must not post: the three typed link fields share one name.
+				field.querySelectorAll('input, select, textarea').forEach((input) => {
+					if (input.type !== 'hidden') input.disabled = !show;
+				});
+			});
+		};
+
+		select.addEventListener('change', update);
+		update();
 	}
 
 	function initDelete(button) {
