@@ -7,6 +7,8 @@ Banners and popups for Concrete CMS, managed from one dashboard.
 - **Popups** use a native `<dialog>` (focus trap, Esc, inert background) and open on page load (with an
   optional delay), scroll depth, an element scrolling into view, or a click. One popup shows per page: the
   highest priority eligible one.
+- Each notification can carry a call-to-action link: a page, a file, an external web address, a phone number
+  or an email address, set per locale.
 - Both have a start/end window, an optional recurrence rule, all-pages or specific-pages targeting, and
   per-locale content with a fallback language.
 - Settings live in the `nmSettings` table, not in package config files.
@@ -26,6 +28,19 @@ enable popups, fallback language, excluded paths, bundled CSS on/off).
 The bundled CSS is driven by custom properties, eg. `--nm-banner-bg`, `--nm-banner-color`, `--nm-popup-bg`,
 `--nm-popup-accent`. Set them on `:root`, or tick "Use my own CSS" in Settings and style `<nm-banner>`,
 `.nm-banner__item`, `<nm-popup>` and `.nm-popup` yourself.
+
+## Links
+
+Choose a link type per locale on the notification form. Page and file links are picked from the sitemap and
+file manager. Web addresses must be http(s) (or a plain domain such as `example.com`), phone numbers become
+`tel:` links, and email addresses become `mailto:` links; anything that doesn't validate is rejected on save.
+Leave the link text blank to use the page or file name, the number, the address or the domain.
+
+## Upgrading
+
+Entity changes are applied by the package upgrade, which Concrete only runs when `$pkgVersion` in
+`controller.php` increases. Bump it, then run `c5:package:update notification_manager_kit` (or update from
+the dashboard).
 
 ## Security and performance notes
 
@@ -70,6 +85,7 @@ Run these commands from the repository root:
 | Command                                             | Purpose                                                                                                                        |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `composer test`                                     | Run PHPUnit tests.                                                                                                             |
+| `npm test`                                          | Run the JavaScript tests (Vitest and jsdom) for the Web Components.                                                            |
 | `composer test-coverage`                            | Run PHPUnit and print a coverage report.                                                                                       |
 | `composer typecheck`                                | Run PHPStan using `phpstan.neon`. Findings are displayed, but the command exits successfully even when PHPStan reports errors. |
 | `composer format:check`                             | Check PHP and JavaScript formatting.                                                                                           |

@@ -2,6 +2,39 @@
 
 Notable changes to this project are documented here.
 
+## 0.1.2
+
+### Added
+
+- Call-to-action links can be a page, a file, an external web address, a phone
+  number or an email address (or no link), chosen per locale. Blank link text
+  falls back to the page or file name, the number, the address or the domain.
+- A priority outside -1000 to 1000 is rejected with a validation error instead
+  of being silently clamped.
+- Tests for link resolution, priority validation, and a check that no mapped
+  table or column name is a MySQL reserved word.
+
+### Changed
+
+- `nmNotificationContents` gains `linkType`, `linkValue` and `linkFID`. Existing
+  rows with only a linked page are read as page links, so nothing needs
+  migrating. Upgrading the package applies the schema change.
+- The banner `interval` column is renamed `intervalMs`.
+
+### Fixed
+
+- Saving any banner failed with an SQL syntax error, because `interval` is a
+  reserved word in MySQL.
+- Saving a notification threw a TypeError, because the site's locales are a
+  Doctrine collection rather than an array.
+
+### Security
+
+- Free text link targets are validated: only http(s) web addresses, tel: numbers
+  and plain mailto: addresses are ever written into an href. `javascript:`,
+  `data:` and similar schemes, and email addresses carrying extra headers, are
+  refused.
+
 ## 0.1.0
 
 ### Added
