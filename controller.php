@@ -78,7 +78,7 @@ class Controller extends PackageController
      * ]
      */
     protected $packageDependencies = [
-        'class_kit' => true
+        'class_kit' => true,
     ];
 
     /**
