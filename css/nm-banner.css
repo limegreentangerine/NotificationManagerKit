@@ -1,0 +1,139 @@
+/*
+ * Override any of these on :root (or nm-banner) to restyle without touching the package.
+ */
+nm-banner {
+	--nm-banner-bg: var(--bs-primary, #1f4e79);
+	--nm-banner-color: var(--bs-white, #fff);
+	--nm-banner-pad-y: 0.5rem;
+	--nm-banner-pad-x: 1.5rem;
+	--nm-index: 0;
+
+	display: block;
+	position: relative;
+	z-index: 999;
+	background: var(--nm-banner-bg);
+	color: var(--nm-banner-color);
+	overflow: hidden;
+}
+
+.nm-banner__track {
+	display: grid;
+}
+
+.nm-banner__item {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--nm-banner-pad-y) var(--nm-banner-pad-x);
+	text-align: center;
+}
+
+.nm-banner__item p {
+	margin: 0;
+	color: inherit;
+}
+
+.nm-banner__content a,
+.nm-banner__link {
+	color: inherit;
+	font-weight: 600;
+	text-decoration: underline;
+}
+
+.nm-banner__link {
+	margin-inline-start: 0.5rem;
+}
+
+.nm-banner__content a:focus-visible,
+.nm-banner__link:focus-visible,
+.nm-banner__close:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+.nm-banner__close {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-end: 0.5rem;
+	width: 2.5rem;
+	background: none;
+	border: 0;
+	color: inherit;
+	cursor: pointer;
+}
+
+.nm-banner__close::before {
+	content: '\00d7';
+	font-size: 1.5rem;
+	line-height: 1;
+}
+
+/*
+ * Several banners: items share one grid cell, so the bar is as tall as the tallest and never changes height.
+ * The first item is active in the server markup, so this is correct before any script runs.
+ */
+nm-banner[data-rotating]:not([data-static]) .nm-banner__item {
+	grid-area: 1 / 1;
+	opacity: 0;
+	visibility: hidden;
+	transition:
+		opacity 300ms ease,
+		visibility 0s linear 300ms;
+}
+
+nm-banner[data-rotating]:not([data-static]) .nm-banner__item.is-active {
+	opacity: 1;
+	visibility: visible;
+	transition-delay: 0s;
+}
+
+nm-banner[data-transition='scroll-vertical'][data-rotating]:not([data-static]) .nm-banner__item {
+	transform: translateY(100%);
+	transition:
+		opacity 300ms ease,
+		transform 300ms ease,
+		visibility 0s linear 300ms;
+}
+
+nm-banner[data-transition='scroll-vertical'][data-rotating]:not([data-static])
+	.nm-banner__item.is-active {
+	transform: none;
+}
+
+/* Ticker: all banners in one line, scrolling continuously. */
+nm-banner[data-transition='ticker'][data-rotating]:not([data-static]) .nm-banner__track {
+	display: flex;
+	width: max-content;
+	animation: nm-ticker 30s linear infinite;
+}
+
+nm-banner[data-transition='ticker'][data-rotating]:not([data-static]) .nm-banner__item {
+	grid-area: auto;
+	opacity: 1;
+	visibility: visible;
+	flex: none;
+	padding-inline: 4rem;
+	white-space: nowrap;
+}
+
+nm-banner[data-transition='ticker']:hover .nm-banner__track {
+	animation-play-state: paused;
+}
+
+@keyframes nm-ticker {
+	from {
+		transform: translateX(100vw);
+	}
+	to {
+		transform: translateX(-100%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	nm-banner .nm-banner__item,
+	nm-banner .nm-banner__track {
+		transition: none !important;
+		animation: none !important;
+	}
+}

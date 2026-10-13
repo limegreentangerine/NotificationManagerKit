@@ -2,6 +2,23 @@
 
 Notable changes to this project are documented here.
 
+## 0.1.0
+
+### Added
+
+- Banners and popups in one package, as a single-table discriminator hierarchy
+  (`AbstractNotification` -> `BannerNotification` | `PopupNotification`).
+- Settings stored in the `nmSettings` table instead of the package config.
+- `<nm-banner>` and `<nm-popup>` Web Components (native `<dialog>` for popups),
+  with no jQuery dependency.
+- Recurrence rules and priority for both notification types.
+- Cached, query-free eligibility checks on the front end.
+
+### Security
+
+- All output escaped; rich text sanitised on save and on read; trigger selectors
+  validated; CSRF tokens validated on every dashboard save and delete.
+
 ## 0.0.0
 
 ### Added

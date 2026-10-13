@@ -1,5 +1,5 @@
 {
-	"name": "composer_package",
+	"name": "notification_manager_kit",
 	"version": "1.0.0",
 	"description": "",
 	"main": "index.js",
@@ -7,21 +7,23 @@
 		"test": "tests"
 	},
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "vitest run"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/limegreentangerine/composer_package.git"
+		"url": "git+https://github.com/limegreentangerine/notification_manager_kit.git"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"type": "commonjs",
 	"bugs": {
-		"url": "https://github.com/limegreentangerine/composer_package/issues"
+		"url": "https://github.com/limegreentangerine/notification_manager_kit/issues"
 	},
-	"homepage": "https://github.com/limegreentangerine/composer_package#readme",
+	"homepage": "https://github.com/limegreentangerine/notification_manager_kit#readme",
 	"devDependencies": {
-		"prettier": "^3.9.6"
+		"jsdom": "^26.1.0",
+		"prettier": "^3.9.6",
+		"vitest": "^3.2.4"
 	}
 }
