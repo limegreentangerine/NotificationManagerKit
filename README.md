@@ -15,9 +15,6 @@ Banners and popups for Concrete CMS, managed from one dashboard.
 - Notifications are one Doctrine entity hierarchy (`AbstractNotification`, single table, discriminator
   `banner` | `popup`).
 
-Replaces the `announcement_bar`, `notification_popup` and `notification_banner_kit` packages; it will not
-install while any of them is installed.
-
 ## Dashboard
 
 `Dashboard > Notification Manager` has **Notifications** (add, edit, delete) and **Settings** (enable banners,
