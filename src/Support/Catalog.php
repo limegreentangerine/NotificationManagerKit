@@ -15,7 +15,7 @@ use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, Pop
  */
 final class Catalog
 {
-    private const KEY = 'notification_manager_kit/catalog';
+    private const KEY = 'notification_manager_kit/catalog/v2';
     private const LIFETIME = 43200;
 
     private static ?CatalogData $memo = null;
@@ -136,6 +136,7 @@ final class Catalog
             $notification->getType(),
             $notification->getPriority(),
             $notification->getDateUpdated()->getTimestamp(),
+            $notification->getDateCreated()->getTimestamp(),
             $notification->getSchedule(),
             $notification->getDisplayScope(),
             $notification->getPageIds(),

@@ -18,6 +18,7 @@ final readonly class NotificationView
         public string $type,
         public int $priority,
         public int $version,
+        public int $created,
         public Schedule $schedule,
         public string $scope,
         public array $pageIds,

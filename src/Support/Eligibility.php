@@ -31,8 +31,8 @@ final class Eligibility
             }
         }
 
-        // Newest edit breaks a priority tie, so the result is stable regardless of database row order.
-        $byPriority = fn(NotificationView $a, NotificationView $b) => [$b->priority, $b->version, $a->id] <=> [$a->priority, $a->version, $b->id];
+        // Newest edit breaks a priority tie, then the most recently created, then id, so the result is stable regardless of database row order.
+        $byPriority = fn(NotificationView $a, NotificationView $b) => [$b->priority, $b->version, $b->created, $a->id] <=> [$a->priority, $a->version, $a->created, $b->id];
         usort($banners, $byPriority);
         usort($popups, $byPriority);
 

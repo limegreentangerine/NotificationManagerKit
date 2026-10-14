@@ -9,9 +9,9 @@ use NotificationManagerKit\Support\{CatalogData, Eligibility, NotificationView, 
 
 final class EligibilityTest extends TestCase
 {
-    private function view(string $id, string $type = 'banner', int $priority = 0, ?Schedule $schedule = null, string $scope = 'all', array $pageIds = [], int $version = 1): NotificationView
+    private function view(string $id, string $type = 'banner', int $priority = 0, ?Schedule $schedule = null, string $scope = 'all', array $pageIds = [], int $version = 1, int $created = 1): NotificationView
     {
-        return new NotificationView($id, $type, $priority, $version, $schedule ?? new Schedule(), $scope, $pageIds, 'Name', '<p>x</p>', '', '', null, []);
+        return new NotificationView($id, $type, $priority, $version, $created, $schedule ?? new Schedule(), $scope, $pageIds, 'Name', '<p>x</p>', '', '', null, []);
     }
 
     private function catalog(array $views, bool $banners = true, bool $popups = true): CatalogData
@@ -46,6 +46,16 @@ final class EligibilityTest extends TestCase
         ]), 1);
 
         $this->assertSame(['b', 'c', 'a'], $this->ids($result['banners']));
+    }
+
+    public function testEqualPriorityAndVersionFallsBackToNewestCreated(): void
+    {
+        $result = Eligibility::select($this->catalog([
+            $this->view('newer', 'popup', 3, created: 200),
+            $this->view('older', 'popup', 3, created: 100),
+        ]), 1);
+
+        $this->assertSame('newer', $result['popup']->id);
     }
 
     public function testDisabledTypesAreSkipped(): void
