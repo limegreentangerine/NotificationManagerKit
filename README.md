@@ -114,7 +114,7 @@ Entity changes are applied by the package upgrade, which Concrete only runs when
 `controller.php` increases. Bump it, then run `c5:package:update notification_manager_kit` (or update from
 the dashboard).
 
-After upgrading to 0.4.0 run Composer in your site so that its `vendor/` gets the new libraries (OpenSpout and
+When upgrading from a version before 0.4.0, run Composer in your site so that its `vendor/` gets the new libraries (OpenSpout and
 dompdf, used for the Excel and PDF downloads). Concrete also keeps each administrator's dashboard menu in their
 session, so the new **Statistics** item appears once they sign out and back in.
 

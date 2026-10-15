@@ -2,6 +2,21 @@
 
 Notable changes to this project are documented here.
 
+## 1.0.0
+
+First stable release. It brings together everything since 0.1.x, described in
+the entries below: audience targeting and Duplicate (0.2.0), statistics, the
+Performance panel and the cleanup task (0.3.0), and the Statistics page with
+Excel, JSON and PDF downloads (0.4.0).
+
+### Changed
+
+- The package version is now 1.0.0. There are no functional changes from 0.4.0.
+- Upgrading from an earlier version applies the schema changes of every
+  release in between in one go (`audienceRules`, `nmNotificationStats`, and the
+  statistics settings), and installs the Statistics page. Run Composer in your
+  site afterwards so its `vendor/` has OpenSpout and dompdf (see 0.4.0).
+
 ## 0.4.0
 
 ### Added
