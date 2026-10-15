@@ -14,7 +14,13 @@
 		"url": "git+https://github.com/limegreentangerine/notification_manager_kit.git"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "Dave Hendy <david@limegreentangerine.co.uk>",
+	"contributors": [
+		{
+			"name": "Hannah Johns",
+			"email": "hannah@limegreentangerine.co.uk"
+		}
+	],
 	"license": "ISC",
 	"type": "commonjs",
 	"bugs": {
