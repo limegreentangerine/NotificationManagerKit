@@ -78,6 +78,24 @@ class PopupNotification extends AbstractNotification
         return self::TYPE_POPUP;
     }
 
+    public function duplicate(): static
+    {
+        $copy = parent::duplicate();
+
+        $copy->frequency = $this->frequency;
+        $copy->triggerOnLoad = $this->triggerOnLoad;
+        $copy->triggerDelayMs = $this->triggerDelayMs;
+        $copy->triggerOnScroll = $this->triggerOnScroll;
+        $copy->triggerScrollValue = $this->triggerScrollValue;
+        $copy->triggerScrollUnit = $this->triggerScrollUnit;
+        $copy->triggerOnScrollToElement = $this->triggerOnScrollToElement;
+        $copy->triggerScrollElementSelector = $this->triggerScrollElementSelector;
+        $copy->triggerOnClick = $this->triggerOnClick;
+        $copy->triggerClickSelector = $this->triggerClickSelector;
+
+        return $copy;
+    }
+
     public function getFrequency(): string
     {
         return isset(self::FREQUENCIES[$this->frequency]) ? $this->frequency : 'every_time_until_close';

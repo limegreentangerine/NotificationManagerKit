@@ -396,6 +396,48 @@ class Notifications extends DashboardPageController
         $this->buildRedirect('/dashboard/notification_manager/notifications/')->send();
     }
 
+    /**
+     * Copies a notification (inactive, names prefixed "Copy of") and opens the copy for editing.
+     */
+    public function duplicate($id = false)
+    {
+        $id = (string) $id;
+        $original = null;
+
+        if (!$this->request->isPost() || !$this->token->validate('duplicate-notification-id-' . $id)) {
+            $this->error->add($this->token->getErrorMessage());
+        } else {
+            $original = AbstractNotification::getByID($id) ?: null;
+
+            if (!$original) {
+                $this->error->add(t('Unable to find the specified notification.'));
+            }
+        }
+
+        if ($this->error->has()) {
+            $this->flash('error', implode(' ', $this->error->getList()));
+            $this->buildRedirect('/dashboard/notification_manager/notifications/')->send();
+            exit;
+        }
+
+        $copy = $original->duplicate();
+
+        foreach ($copy->getData() as $content) {
+            if ($content->getName() !== '') {
+                $content->setName(mb_substr(t('Copy of %s', $content->getName()), 0, 255));
+            }
+            $this->entityManager->persist($content);
+        }
+
+        $this->entityManager->persist($copy);
+        $this->entityManager->flush();
+        Catalog::flush();
+
+        $this->flash('success', t('Notification duplicated. The copy is inactive until you activate it.'));
+        $this->buildRedirect('/dashboard/notification_manager/notifications/details/' . $copy->getID())->send();
+        exit;
+    }
+
     public function delete($id = false)
     {
         $rf = $this->app->make(ResponseFactoryInterface::class);

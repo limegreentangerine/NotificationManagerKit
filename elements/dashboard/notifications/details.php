@@ -15,6 +15,10 @@ $editor->setAllowFileManager(false);
 
 <?php if ($v['id'] !== '') { ?>
     <div class="ccm-dashboard-header-buttons">
+        <form method="post" action="<?php echo O::e($view->action('duplicate', $v['id'])) ?>" class="d-inline">
+            <?php echo $token->output('duplicate-notification-id-' . $v['id']) ?>
+            <button type="submit" class="btn btn-secondary"><?php echo t('Duplicate') ?></button>
+        </form>
         <button type="button" class="btn btn-danger" data-nm-delete
             data-dialog-title="<?php echo O::e(t('Confirm Delete')) ?>"
             data-redirect="<?php echo O::e((string) URL::to('/dashboard/notification_manager/notifications')) ?>">

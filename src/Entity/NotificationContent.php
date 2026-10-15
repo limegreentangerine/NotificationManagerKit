@@ -12,6 +12,8 @@ use NotificationManagerKit\Support\{LinkResolver, Sanitizer};
 /**
  * One locale's worth of text (and popup image) for a notification.
  *
+ * @phpstan-consistent-constructor
+ *
  * @ORM\Entity
  * @ORM\Table(
  *      name="nmNotificationContents",
@@ -70,6 +72,27 @@ class NotificationContent extends UpdatedGuidEntity
      * @ORM\JoinColumn(name="linkFID", referencedColumnName="fID", onDelete="SET NULL", nullable=true)
      */
     protected $linkFile = null;
+
+    /**
+     * An unsaved copy of this locale's content. Fields are copied as stored (already sanitised, links still in
+     * their abstract form), so nothing is re-processed; the image and linked file are shared references.
+     */
+    public function duplicate(): static
+    {
+        $copy = new static();
+
+        $copy->language = $this->language;
+        $copy->name = $this->name;
+        $copy->fID = $this->fID;
+        $copy->content = $this->content;
+        $copy->linkText = $this->linkText;
+        $copy->linkCID = $this->linkCID;
+        $copy->linkType = $this->linkType;
+        $copy->linkValue = $this->linkValue;
+        $copy->linkFile = $this->linkFile;
+
+        return $copy;
+    }
 
     public function getLanguage(): string
     {

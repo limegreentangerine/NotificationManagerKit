@@ -12,6 +12,8 @@ use Doctrine\Common\Collections\{ArrayCollection, Collection};
  * Everything shared (schedule, targeting, content) lives here; type specific columns live on the subclasses
  * and are nullable at the database level, so required-ness is enforced by validation instead.
  *
+ * @phpstan-consistent-constructor
+ *
  * @ORM\Entity
  * @ORM\Table(
  *      name="nmNotifications",
@@ -107,6 +109,29 @@ abstract class AbstractNotification extends UpdatedGuidEntity
             self::TYPE_POPUP => new PopupNotification(),
             default => null,
         };
+    }
+
+    /**
+     * An unsaved, inactive copy: same schedule, targeting and per-locale content, with its own content rows.
+     * Subclasses extend this to carry their type specific settings.
+     */
+    public function duplicate(): static
+    {
+        $copy = new static();
+
+        $copy->active = false;
+        $copy->priority = $this->priority;
+        $copy->startDate = $this->startDate === null ? null : \DateTime::createFromInterface($this->startDate);
+        $copy->endDate = $this->endDate === null ? null : \DateTime::createFromInterface($this->endDate);
+        $copy->repeatEvent = $this->repeatEvent;
+        $copy->displayScope = $this->displayScope;
+        $copy->setPageIds($this->getPageIds());
+
+        foreach ($this->data as $content) {
+            $copy->addData($content->duplicate());
+        }
+
+        return $copy;
     }
 
     public function getTypeString(): string

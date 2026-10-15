@@ -37,6 +37,17 @@ class BannerNotification extends AbstractNotification
         return self::TYPE_BANNER;
     }
 
+    public function duplicate(): static
+    {
+        $copy = parent::duplicate();
+
+        $copy->transition = $this->transition;
+        $copy->interval = $this->interval;
+        $copy->dismissible = $this->dismissible;
+
+        return $copy;
+    }
+
     public function getTransition(): string
     {
         return isset(self::TRANSITIONS[$this->transition]) ? $this->transition : 'fade';
