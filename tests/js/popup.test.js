@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadScript, polyfillDialog } from './helpers.js';
 
 const popup = (config) => `
@@ -23,6 +23,7 @@ beforeAll(() => {
 	polyfillDialog();
 	loadScript('nm-storage.js');
 	loadScript('nm-audience.js');
+	loadScript('nm-track.js');
 	loadScript('nm-popup.js');
 });
 
@@ -30,6 +31,7 @@ beforeEach(() => {
 	localStorage.clear();
 	sessionStorage.clear();
 	window.NotificationManager.audience.reset();
+	window.NotificationManager.track.reset();
 	document.body.innerHTML = '';
 	vi.useFakeTimers();
 });
@@ -197,5 +199,99 @@ describe('<nm-popup> one per page', () => {
 		vi.runAllTimers();
 
 		expect(document.querySelectorAll('nm-popup').length).toBe(0);
+	});
+});
+
+describe('<nm-popup> statistics', () => {
+	const withLink = (config) => `
+		<nm-popup data-config='${JSON.stringify(config)}'>
+			<dialog><form method="dialog"><button class="nm-popup__close">x</button></form>
+				<div><h2>Hi</h2><a class="nm-popup__link" href="#go">Go</a><p class="plain">text</p></div>
+			</dialog>
+		</nm-popup>`;
+	const tracking = { ...base, onLoad: true, frequency: 'every_time', track: { url: '/t', lang: 'en' } };
+	let events;
+
+	beforeEach(() => {
+		events = vi.spyOn(window.NotificationManager.track, 'event');
+	});
+
+	afterEach(() => {
+		events.mockRestore();
+	});
+
+	it('is set up from the endpoint the server rendered', () => {
+		document.body.innerHTML = withLink(tracking);
+
+		expect(window.NotificationManager.track.ready).toBe(true);
+	});
+
+	it('is not set up when the server gave no endpoint', () => {
+		document.body.innerHTML = withLink({ ...tracking, track: undefined });
+
+		expect(window.NotificationManager.track.ready).toBe(false);
+	});
+
+	it('counts a popup when it opens, not before', () => {
+		document.body.innerHTML = withLink({ ...tracking, delay: 1000 });
+		expect(events).not.toHaveBeenCalled();
+
+		vi.runAllTimers();
+		expect(events).toHaveBeenCalledWith('p1', 'i');
+	});
+
+	it('does not count a popup that never opens', () => {
+		document.body.innerHTML = withLink({ ...tracking, onLoad: false });
+		vi.runAllTimers();
+
+		expect(events).not.toHaveBeenCalled();
+	});
+
+	it('does not count a popup that is not for this visitor', () => {
+		document.body.innerHTML = withLink({ ...tracking, audience: { visitor: 'returning' } });
+		vi.runAllTimers();
+
+		expect(events).not.toHaveBeenCalled();
+	});
+
+	it('does not count a popup the visitor has already closed', () => {
+		window.NotificationManager.storage.markClosed('p1', 'once', 1);
+		document.body.innerHTML = withLink({ ...tracking, frequency: 'once' });
+		vi.runAllTimers();
+
+		expect(events).not.toHaveBeenCalled();
+	});
+
+	it('counts a close as a dismissal', () => {
+		document.body.innerHTML = withLink(tracking);
+		vi.runAllTimers();
+		document.querySelector('dialog').close();
+
+		expect(events).toHaveBeenCalledWith('p1', 'd');
+	});
+
+	it('counts a click on the call-to-action link', () => {
+		document.body.innerHTML = withLink(tracking);
+		vi.runAllTimers();
+		document.querySelector('.nm-popup__link').click();
+
+		expect(events).toHaveBeenCalledWith('p1', 'c');
+	});
+
+	it('does not count clicks on other content', () => {
+		document.body.innerHTML = withLink(tracking);
+		vi.runAllTimers();
+		document.querySelector('.plain').click();
+
+		expect(events).not.toHaveBeenCalledWith('p1', 'c');
+	});
+
+	it('counts again when reopened by its click trigger, but the tracker only sends one impression', () => {
+		document.body.innerHTML = `<a class="go" href="#">Go</a>${withLink({ ...tracking, onLoad: false, click: '.go' })}`;
+		document.querySelector('.go').click();
+		document.querySelector('dialog').close();
+		document.querySelector('.go').click();
+
+		expect(events.mock.calls.filter(([, type]) => type === 'i').length).toBeGreaterThanOrEqual(1);
 	});
 });

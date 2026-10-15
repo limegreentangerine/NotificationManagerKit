@@ -4,13 +4,16 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 use NotificationManagerKit\Support\Output;
 
-/** @var NotificationManagerKit\Support\NotificationView[] $banners */
+/**
+ * @var NotificationManagerKit\Support\NotificationView[] $banners
+ * @var array{url: string, lang: string}|null             $track where the browser reports what it showed, or null for no statistics
+ */
 $lead = $banners[0];
 $transition = in_array($lead->options['transition'] ?? '', ['fade', 'scroll-vertical', 'ticker'], true) ? $lead->options['transition'] : 'fade';
 $interval = max(2000, min(60000, (int) ($lead->options['interval'] ?? 6000)));
 $rotating = count($banners) > 1;
 ?>
-<nm-banner class="nm-banner" role="region" aria-label="<?php echo Output::e(t('Announcements')) ?>" data-transition="<?php echo Output::e($transition) ?>" data-interval="<?php echo (int) $interval ?>"<?php echo $rotating ? ' data-rotating' : '' ?>>
+<nm-banner class="nm-banner" role="region" aria-label="<?php echo Output::e(t('Announcements')) ?>" data-transition="<?php echo Output::e($transition) ?>" data-interval="<?php echo (int) $interval ?>"<?php echo !empty($track) ? ' data-track="' . Output::e(Output::json($track)) . '"' : '' ?><?php echo $rotating ? ' data-rotating' : '' ?>>
     <div class="nm-banner__track">
         <?php foreach ($banners as $i => $banner) { ?>
             <div class="nm-banner__item<?php echo $i === 0 ? ' is-active' : '' ?>" data-id="<?php echo Output::e($banner->id) ?>" data-version="<?php echo (int) $banner->version ?>"<?php echo $banner->audience !== [] ? ' data-audience="' . Output::e(Output::json($banner->audience)) . '" hidden' : '' ?>>

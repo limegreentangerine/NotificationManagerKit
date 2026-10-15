@@ -6,12 +6,14 @@ use Concrete\Core\Asset\AssetList;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Entity\File\File as FileEntity;
 use Concrete\Core\Page\Controller\DashboardPageController;
-use NotificationManagerKit\Support\{Audience, Catalog, LinkResolver, Schedule};
+use NotificationManagerKit\Support\{Audience, Catalog, LinkResolver, Schedule, StatsStore};
 use Concrete\Package\NotificationManagerKit\Controller\Search\Notifications as SearchController;
 use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, NotificationContent, PopupNotification, Settings};
 
 class Notifications extends DashboardPageController
 {
+    /** The window the list and the details page report over. */
+    protected const STATS_DAYS = 30;
     protected $helpers = [
         'form',
         'concrete/ui',
@@ -342,6 +344,40 @@ class Notifications extends DashboardPageController
         return $v;
     }
 
+    /**
+     * Impressions and clicks for the notifications on this page of the list. A failure here (eg. before the upgrade
+     * that creates the table has run) leaves the columns at zero rather than taking the list down.
+     *
+     * @param string[] $ids
+     *
+     * @return array<string, array{impressions: int, clicks: int}>
+     */
+    protected function statTotals(array $ids): array
+    {
+        if (!Settings::get()->areStatsEnabled()) {
+            return [];
+        }
+
+        try {
+            return StatsStore::make()->totals($ids, self::STATS_DAYS);
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    protected function statSummary(string $id): ?\NotificationManagerKit\Support\StatsSummary
+    {
+        if (!Settings::get()->areStatsEnabled()) {
+            return null;
+        }
+
+        try {
+            return StatsStore::make()->summary($id, self::STATS_DAYS);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     public function on_start()
     {
         parent::on_start();
@@ -374,6 +410,9 @@ class Notifications extends DashboardPageController
         $this->set('result', $result);
         $this->set('items', $result->getItems());
         $this->set('pagination', $result->getPaginationHTML());
+        $this->set('statsEnabled', Settings::get()->areStatsEnabled());
+        $this->set('statsDays', self::STATS_DAYS);
+        $this->set('statTotals', $this->statTotals(array_map(fn($item) => $item->getID(), $result->getItems())));
     }
 
     public function add()
@@ -395,6 +434,9 @@ class Notifications extends DashboardPageController
         $this->prepareForm();
         $this->set('entity', $entity);
         $this->set('v', $this->formData($entity, null));
+        $this->set('statsEnabled', Settings::get()->areStatsEnabled());
+        $this->set('statsDays', self::STATS_DAYS);
+        $this->set('stats', $this->statSummary($entity->getID()));
     }
 
     public function save()

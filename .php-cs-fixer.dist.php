@@ -9,7 +9,8 @@ $finder = PhpCsFixer\Finder::create()
         __DIR__ . '/tests'
     ])
     ->append([
-        __DIR__ . '/controller.php'
+        __DIR__ . '/controller.php',
+        __DIR__ . '/phpstan-bootstrap.php'
     ])
     ->exclude([
         'vendor',

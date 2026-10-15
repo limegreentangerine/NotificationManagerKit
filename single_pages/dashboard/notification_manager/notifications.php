@@ -16,6 +16,9 @@ if (in_array($controller->getTask(), ['add', 'details', 'save'], true)) {
             'linkTypes' => $linkTypes,
             'visitors' => $visitors,
             'deviceTypes' => $deviceTypes,
+            'stats' => $stats ?? null,
+            'statsEnabled' => $statsEnabled ?? false,
+            'statsDays' => $statsDays ?? 30,
             'h' => [
                 'al' => $concrete_asset_library,
                 'ps' => $form_page_selector,
@@ -32,6 +35,9 @@ if (in_array($controller->getTask(), ['add', 'details', 'save'], true)) {
             'items' => $items,
             'result' => $result,
             'pagination' => $pagination,
+            'statsEnabled' => $statsEnabled ?? false,
+            'statsDays' => $statsDays ?? 30,
+            'statTotals' => $statTotals ?? [],
         ],
         'notification_manager_kit',
     );

@@ -39,6 +39,22 @@ use NotificationManagerKit\Support\Output as O;
     </fieldset>
 
     <fieldset>
+        <legend><?php echo t('Statistics') ?></legend>
+
+        <div class="form-check mb-3">
+            <input type="checkbox" id="statsEnabled" name="statsEnabled" class="form-check-input" value="1" <?php echo $settings->areStatsEnabled() ? 'checked' : '' ?>>
+            <label for="statsEnabled" class="form-check-label"><?php echo t('Count impressions, clicks and dismissals') ?></label>
+            <div class="help-block form-text"><?php echo t('Daily totals per notification and language, shown on each notification and in the list. Nothing identifies a visitor and nothing is stored in their browser for this. Crawlers and signed-in administrators are not counted. Turn this off and no tracking code is sent to visitors at all.') ?></div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="statsRetentionDays" class="form-label"><?php echo t('Keep statistics for (days)') ?></label>
+            <input type="number" id="statsRetentionDays" name="statsRetentionDays" class="form-control" min="<?php echo (int) $settings::MIN_RETENTION_DAYS ?>" max="<?php echo (int) $settings::MAX_RETENTION_DAYS ?>" step="1" value="<?php echo (int) $settings->getStatsRetentionDays() ?>">
+            <div class="help-block form-text"><?php echo t('Older totals are removed by the "Prune Notification Statistics" task. Schedule it to run daily from the Automation section of the dashboard.') ?></div>
+        </div>
+    </fieldset>
+
+    <fieldset>
         <legend><?php echo t('Styling') ?></legend>
 
         <div class="form-check mb-3">

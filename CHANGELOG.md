@@ -2,6 +2,41 @@
 
 Notable changes to this project are documented here.
 
+## 0.3.0
+
+### Added
+
+- Statistics. Banners and popups report when they are shown, clicked and
+  dismissed, as daily totals per notification and language. A Performance panel
+  on each notification's details page shows the last 30 days (shown, clicks,
+  click rate, dismissed, dismissal rate and a daily table), and the list gains
+  Views and Clicks columns.
+- Settings to switch statistics off and to choose how long to keep them
+  (7 to 730 days, default 90). With statistics off no tracking code is sent to
+  visitors.
+- A "Prune Notification Statistics" scheduled task that deletes figures older
+  than the retention period.
+- A public `/ccm/notification_manager_kit/track` endpoint that receives the
+  browser's report. It ignores crawlers, signed-in administrators, unknown
+  notifications and languages and cross-site requests, limits one address to
+  300 events a minute, and always replies `204`.
+- Tests for request parsing and validation, bot and origin checks, summaries and
+  rates, the new settings, and the browser tracker, banner and popup reporting.
+
+### Changed
+
+- New `nmNotificationStats` table (one row per notification, day and language;
+  deleted with its notification), and `statsEnabled` and `statsRetentionDays`
+  columns on `nmSettings`. Upgrading the package applies the schema change.
+  Statistics are on by default after upgrading.
+- The cached notification catalog is rebuilt after upgrading (its cache key
+  changed again).
+
+### Security
+
+- Visitors cannot create statistics for a made-up notification or language, and
+  one request can add at most one of each event per notification.
+
 ## 0.2.0
 
 ### Added

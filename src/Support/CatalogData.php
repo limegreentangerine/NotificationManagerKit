@@ -17,6 +17,7 @@ final readonly class CatalogData
         public bool $useCustomCss = false,
         public array $excludedPaths = [],
         public array $notifications = [],
+        public bool $statsEnabled = false,
     ) {}
 
     public function isAnythingEnabled(): bool

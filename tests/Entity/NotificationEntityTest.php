@@ -6,7 +6,7 @@ namespace NotificationManagerKit\Tests\Entity;
 
 use PHPUnit\Framework\TestCase;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
-use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, NotificationContent, NotificationPage, PopupNotification, Settings};
+use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, NotificationContent, NotificationPage, NotificationStat, PopupNotification, Settings};
 
 final class NotificationEntityTest extends TestCase
 {
@@ -65,7 +65,7 @@ final class NotificationEntityTest extends TestCase
         $keywords = new \Doctrine\DBAL\Platforms\Keywords\MySQL80Keywords();
         $reserved = [];
 
-        foreach ([AbstractNotification::class, BannerNotification::class, PopupNotification::class, NotificationContent::class, NotificationPage::class, Settings::class] as $class) {
+        foreach ([AbstractNotification::class, BannerNotification::class, PopupNotification::class, NotificationContent::class, NotificationPage::class, NotificationStat::class, Settings::class] as $class) {
             $meta = $this->metadata($class);
 
             if ($keywords->isKeyword($meta->getTableName())) {
@@ -209,5 +209,14 @@ final class NotificationEntityTest extends TestCase
         $this->assertSame('fr', (new Settings())->setDefaultLanguage('fr')->getDefaultLanguage());
         $this->assertSame('pt_BR', (new Settings())->setDefaultLanguage('pt_BR')->getDefaultLanguage());
         $this->assertSame('en', (new Settings())->setDefaultLanguage('<x>')->getDefaultLanguage());
+    }
+
+    public function testStatsTableHasOneRowPerNotificationDayAndLanguage(): void
+    {
+        $meta = $this->metadata(NotificationStat::class);
+
+        $this->assertSame('nmNotificationStats', $meta->getTableName());
+        $this->assertSame(['notificationId', 'statDate', 'language'], $meta->table['uniqueConstraints']['uniq_nm_stat_day']['columns']);
+        $this->assertSame('CASCADE', strtoupper($meta->associationMappings['notification']['joinColumns'][0]['onDelete']));
     }
 }

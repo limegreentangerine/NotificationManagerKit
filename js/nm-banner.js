@@ -33,8 +33,41 @@ class NMBanner extends HTMLElement {
 			return;
 		}
 
+		this.initTrack();
 		this.addEventListener('click', this.onClick);
 		this.sync();
+	}
+
+	/** The server renders the statistics endpoint into the markup; without it nothing is reported. */
+	initTrack() {
+		const track = window.NotificationManager.track;
+		if (!track || !this.dataset.track) return;
+
+		try {
+			track.init(JSON.parse(this.dataset.track));
+		} catch {
+			// A malformed config means no statistics, never a broken banner.
+		}
+	}
+
+	report(id, type) {
+		window.NotificationManager.track?.event(id, type);
+	}
+
+	/**
+	 * Banners on screen right now count as shown: the active one while several take turns, otherwise all of them
+	 * (a ticker, reduced motion, or just one). The tracker ignores a banner it has already counted.
+	 */
+	trackShown() {
+		const taking =
+			this.hasAttribute('data-rotating') &&
+			!this.hasAttribute('data-static') &&
+			this.dataset.transition !== 'ticker';
+		const shown = taking
+			? this.items.filter((item) => item.classList.contains('is-active'))
+			: this.items;
+
+		shown.forEach((item) => this.report(item.dataset.id, 'i'));
 	}
 
 	disconnectedCallback() {
@@ -43,10 +76,17 @@ class NMBanner extends HTMLElement {
 	}
 
 	onClick = (event) => {
+		const link = event.target.closest('.nm-banner__link');
+		if (link && this.contains(link)) {
+			this.report(link.closest('.nm-banner__item')?.dataset.id, 'c');
+			return;
+		}
+
 		const button = event.target.closest('[data-nm-close]');
 		if (!button || !this.contains(button)) return;
 
 		const item = button.closest('.nm-banner__item');
+		this.report(item.dataset.id, 'd');
 		this.storage.dismiss(item.dataset.id, item.dataset.version);
 		item.remove();
 		this.items = this.items.filter((i) => i !== item);
@@ -59,8 +99,13 @@ class NMBanner extends HTMLElement {
 		this.sync();
 	};
 
-	/** Re-apply rotation after the set of banners changes. */
+	/** Re-apply rotation after the set of banners changes, then count whatever is now on screen. */
 	sync() {
+		this.layout();
+		this.trackShown();
+	}
+
+	layout() {
 		this.stop();
 
 		const rotating = this.items.length > 1;
@@ -102,6 +147,7 @@ class NMBanner extends HTMLElement {
 		this.items[current]?.classList.remove('is-active');
 		this.items[next].classList.add('is-active');
 		this.style.setProperty('--nm-index', String(next));
+		this.trackShown();
 	}
 
 	stop() {

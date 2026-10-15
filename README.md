@@ -13,6 +13,8 @@ Banners and popups for Concrete CMS, managed from one dashboard.
   per-locale content with a fallback language.
 - Optional audience rules per notification: new or returning visitors, device, a URL parameter and the
   referring site. They are checked in the browser, so pages stay cacheable.
+- Statistics: how often each notification was shown, clicked and dismissed, as daily totals with no visitor
+  data, shown on the notification and in the list.
 - Settings live in the `nmSettings` table, not in package config files.
 - Notifications are one Doctrine entity hierarchy (`AbstractNotification`, single table, discriminator
   `banner` | `popup`).
@@ -20,7 +22,7 @@ Banners and popups for Concrete CMS, managed from one dashboard.
 ## Dashboard
 
 `Dashboard > Notification Manager` has **Notifications** (add, edit, duplicate, delete) and **Settings** (enable banners,
-enable popups, fallback language, excluded paths, bundled CSS on/off).
+enable popups, fallback language, excluded paths, statistics, bundled CSS on/off).
 
 **Duplicate** (on a notification's details page) copies the type settings, schedule, targeting, audience rules and
 every locale's content, including images and links. The copy is inactive and its names are prefixed "Copy of", so
@@ -58,6 +60,33 @@ rendered with the `hidden` attribute and revealed for the visitors it is for. If
 make sure `.nm-banner__item[hidden]` stays hidden. When a popup has rules, the page also carries the next popups
 in priority order and the browser keeps the first one that applies; a popup the visitor has already closed is
 not replaced by the next one.
+
+## Statistics
+
+Each notification's details page has a **Performance** panel (last 30 days: shown, clicks, click rate, dismissed,
+dismissal rate, and a daily table), and the list shows views and clicks per notification.
+
+- **What is counted**: a banner when it is on screen (the active one while several take turns), a popup when it
+  opens, a click on the call-to-action link, and a dismissal (a banner's close button, or closing a popup). Each
+  is counted once per notification per page view.
+- **What is stored**: one row per notification, day and language holding three counters (`nmNotificationStats`).
+  Nothing identifies a visitor, and nothing is stored in their browser for this. Deleting a notification deletes
+  its figures.
+- **Who is not counted**: crawlers and tools, automated browsers, and signed-in users who can open Notification
+  Manager in the dashboard (so editing your own pages doesn't inflate the figures).
+- **How it works**: the page tells the browser where to report (`/ccm/notification_manager_kit/track`), and the
+  browser sends one beacon per page view when the page is hidden or left. Because pages can be cached this has
+  to happen in the browser, so visitors with ad blockers are missed and the figures are approximate.
+- **Switching it off**: untick _Count impressions, clicks and dismissals_ in Settings. No attribute, script or
+  request is then sent to visitors.
+- **Retention**: _Keep statistics for (days)_ in Settings (7 to 730, default 90). Older rows are removed by the
+  **Prune Notification Statistics** task. Schedule it to run daily from the Automation section of the dashboard;
+  `concrete task:prune-notification-statistics` runs it from the command line.
+
+The endpoint is public and cannot use a CSRF token, so it is defensive instead: it only adds to notifications that
+are live, ignores unknown ids and languages, rejects cross-site requests, drops bots and signed-in editors,
+limits one address to 300 events a minute (approximate under heavy parallel load), and always answers `204`
+with no body.
 
 ## Upgrading
 

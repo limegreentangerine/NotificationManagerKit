@@ -5,6 +5,7 @@ namespace NotificationManagerKit\Events;
 use Concrete\Core\Page\Page;
 use Concrete\Core\View\View;
 use Concrete\Core\Asset\AssetList;
+use Concrete\Core\Support\Facade\Url;
 use Concrete\Core\Localization\Localization;
 use NotificationManagerKit\Support\{Catalog, CatalogData, Eligibility};
 
@@ -47,6 +48,7 @@ class NotificationManager
         $list->register('css', 'notification-manager-kit/popup', 'css/nm-popup.css', $options, self::PACKAGE);
         $list->register('javascript', 'notification-manager-kit/storage', 'js/nm-storage.js', $options, self::PACKAGE);
         $list->register('javascript', 'notification-manager-kit/audience', 'js/nm-audience.js', $options, self::PACKAGE);
+        $list->register('javascript', 'notification-manager-kit/track', 'js/nm-track.js', $options, self::PACKAGE);
         $list->register('javascript', 'notification-manager-kit/banner', 'js/nm-banner.js', $options, self::PACKAGE);
         $list->register('javascript', 'notification-manager-kit/popup', 'js/nm-popup.js', $options, self::PACKAGE);
     }
@@ -59,6 +61,11 @@ class NotificationManager
 
         $controller->requireAsset('javascript', 'notification-manager-kit/storage');
         $controller->requireAsset('javascript', 'notification-manager-kit/audience');
+
+        if ($catalog->statsEnabled) {
+            $controller->requireAsset('javascript', 'notification-manager-kit/track');
+        }
+
         $controller->requireAsset('javascript', 'notification-manager-kit/' . $type);
     }
 
@@ -87,8 +94,13 @@ class NotificationManager
         $controller = $page->getPageController();
         self::registerAssets();
 
+        // Where the browser reports what it showed. Null switches statistics off: nothing is rendered or loaded.
+        $track = $catalog->statsEnabled
+            ? ['url' => (string) Url::to('/ccm/notification_manager_kit/track'), 'lang' => Localization::activeLanguage()]
+            : null;
+
         if ($selected['banners'] !== []) {
-            self::$bannerHtml = self::render('banner', ['banners' => $selected['banners']]);
+            self::$bannerHtml = self::render('banner', ['banners' => $selected['banners'], 'track' => $track]);
             self::requireAssets($controller, $catalog, 'banner');
             self::hookOutput();
         }
@@ -96,7 +108,7 @@ class NotificationManager
         if ($selected['popups'] !== []) {
             // In priority order. With audience rules the browser keeps the first popup that applies to the visitor.
             foreach ($selected['popups'] as $popup) {
-                $controller->addFooterItem(self::render('popup', ['popup' => $popup]));
+                $controller->addFooterItem(self::render('popup', ['popup' => $popup, 'track' => $track]));
             }
             self::requireAssets($controller, $catalog, 'popup');
         }

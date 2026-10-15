@@ -53,12 +53,22 @@ class Settings extends DashboardPageController
             return $this->buildRedirect('/dashboard/notification_manager/settings')->send();
         }
 
+        $retention = $this->post('statsRetentionDays');
+
+        if (!SettingsEntity::isValidRetentionDays($retention)) {
+            $this->flash('error', t('Keep statistics for a whole number of days between %s and %s.', SettingsEntity::MIN_RETENTION_DAYS, SettingsEntity::MAX_RETENTION_DAYS));
+
+            return $this->buildRedirect('/dashboard/notification_manager/settings')->send();
+        }
+
         $settings = SettingsEntity::get();
         $settings->setBannersEnabled($this->post('bannersEnabled') !== null)
             ->setPopupsEnabled($this->post('popupsEnabled') !== null)
             ->setUseCustomCss($this->post('useCustomCss') !== null)
             ->setExcludedPathsText((string) $this->post('excludedPaths'))
-            ->setDefaultLanguage($language);
+            ->setDefaultLanguage($language)
+            ->setStatsEnabled($this->post('statsEnabled') !== null)
+            ->setStatsRetentionDays($retention);
 
         $this->entityManager->persist($settings);
         $this->entityManager->flush();

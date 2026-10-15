@@ -4,7 +4,7 @@ namespace Concrete\Package\NotificationManagerKit;
 
 use Concrete\Core\Entity\Package;
 use ClassKit\Package\PackageController;
-use Concrete\Core\Support\Facade\Events;
+use Concrete\Core\Support\Facade\{Events, Route};
 use NotificationManagerKit\Events\NotificationManager;
 use ClassKit\Package\Traits\{AttributeTrait, BlockTrait, PageTrait};
 
@@ -27,7 +27,7 @@ class Controller extends PackageController
      *
      * @var string
      */
-    protected $pkgVersion = '0.2.0';
+    protected $pkgVersion = '0.3.0';
 
     /**
      * The minimum Concrete version compatible with the package.
@@ -99,6 +99,7 @@ class Controller extends PackageController
      * @var array
      */
     protected $databaseTables = [
+        'nmNotificationStats',
         'nmNotification_Contents',
         'nmNotificationPages',
         'nmNotificationContents',
@@ -113,7 +114,9 @@ class Controller extends PackageController
      *
      * @var array
      */
-    protected $tasks = [];
+    protected $tasks = [
+        'prune_notification_statistics' => \NotificationManagerKit\Command\Task\Controller\PruneStatisticsController::class,
+    ];
 
     public function getPackageName()
     {
@@ -136,6 +139,8 @@ class Controller extends PackageController
 
     public function installOrUpgrade(Package $pkg)
     {
+        $this->installContentFile('tasks.xml');
+
         $this->addSinglePage('/dashboard/notification_manager', $pkg, t('Notification Manager'), t('Manage banners and popups'));
         $this->addSinglePage('/dashboard/notification_manager/notifications', $pkg, t('Notifications'), t('Banners and popups'));
         $this->addSinglePage('/dashboard/notification_manager/settings', $pkg, t('Settings'), t('Notification Manager settings'));
@@ -143,7 +148,20 @@ class Controller extends PackageController
         \NotificationManagerKit\Support\Catalog::flush();
     }
 
-    public function registerRoutes(): void {}
+    public function registerRoutes(): void
+    {
+        // Public: pages are cached, so the visitor's browser reports what it showed. See Ajax\Track.
+        Route::register(
+            '/ccm/notification_manager_kit/track',
+            '\NotificationManagerKit\Ajax\Track::collect',
+            'notification_manager_kit.track',
+            [],
+            [],
+            '',
+            [],
+            ['POST'],
+        );
+    }
 
     public function registerEvents(): void {}
 }

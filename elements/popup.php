@@ -4,7 +4,10 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 use NotificationManagerKit\Support\Output;
 
-/** @var NotificationManagerKit\Support\NotificationView $popup */
+/**
+ * @var NotificationManagerKit\Support\NotificationView $popup
+ * @var array{url: string, lang: string}|null           $track where the browser reports what it showed, or null for no statistics
+ */
 $o = $popup->options;
 $titleId = 'nm-popup-title-' . preg_replace('/[^A-Za-z0-9_-]/', '', $popup->id);
 $config = [
@@ -21,6 +24,9 @@ $config = [
 ];
 if ($popup->audience !== []) {
     $config['audience'] = $popup->audience;
+}
+if (!empty($track)) {
+    $config['track'] = $track;
 }
 ?>
 <nm-popup data-config="<?php echo Output::e(Output::json($config)) ?>">

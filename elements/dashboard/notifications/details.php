@@ -39,6 +39,10 @@ $editor->setAllowFileManager(false);
     </div>
 <?php } ?>
 
+<?php if ($v['id'] !== '') { ?>
+    <?php View::element('dashboard/notifications/performance', ['stats' => $stats, 'statsEnabled' => $statsEnabled, 'statsDays' => $statsDays], 'notification_manager_kit') ?>
+<?php } ?>
+
 <form method="post" action="<?php echo O::e($view->action('save')) ?>" data-nm-form>
     <?php echo $token->output('submit') ?>
     <?php if ($v['id'] !== '') { ?>

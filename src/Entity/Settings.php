@@ -17,6 +17,10 @@ use ClassKit\Entity\Core\UpdatedGuidEntity;
  */
 class Settings extends UpdatedGuidEntity
 {
+    public const MIN_RETENTION_DAYS = 7;
+    public const MAX_RETENTION_DAYS = 730;
+    public const DEFAULT_RETENTION_DAYS = 90;
+
     public const BUILT_IN_EXCLUDED_PATHS = ['/login', '/register', '/account/two_factor_auth'];
 
     /**
@@ -43,6 +47,16 @@ class Settings extends UpdatedGuidEntity
      * @ORM\Column(type="string", length=32, nullable=false, options={"default": "en", "comment": "Locale used when a notification has no content for the visitor's locale"})
      */
     protected $defaultLanguage = 'en';
+
+    /**
+     * @ORM\Column(type="boolean", nullable=false, options={"default": true, "comment": "Count impressions, clicks and dismissals"})
+     */
+    protected $statsEnabled = true;
+
+    /**
+     * @ORM\Column(type="integer", nullable=false, options={"default": 90, "comment": "Days of statistics the cleanup task keeps"})
+     */
+    protected $statsRetentionDays = self::DEFAULT_RETENTION_DAYS;
 
     /**
      * The saved settings, or an unsaved instance with the defaults (everything off) if none have been saved yet.
@@ -132,6 +146,43 @@ class Settings extends UpdatedGuidEntity
         }
 
         return array_values(array_unique($paths));
+    }
+
+    public function areStatsEnabled(): bool
+    {
+        return (bool) $this->statsEnabled;
+    }
+
+    public function setStatsEnabled($value): self
+    {
+        $this->statsEnabled = (bool) $value;
+
+        return $this;
+    }
+
+    public function getStatsRetentionDays(): int
+    {
+        return max(self::MIN_RETENTION_DAYS, min(self::MAX_RETENTION_DAYS, (int) ($this->statsRetentionDays ?: self::DEFAULT_RETENTION_DAYS)));
+    }
+
+    /**
+     * Whether a submitted retention is acceptable: a whole number of days within the allowed range.
+     * setStatsRetentionDays() still clamps, so a stored value can never be out of range.
+     */
+    public static function isValidRetentionDays(mixed $days): bool
+    {
+        if (is_int($days) || (is_string($days) && preg_match('/^\d+$/', trim($days)))) {
+            return (int) $days >= self::MIN_RETENTION_DAYS && (int) $days <= self::MAX_RETENTION_DAYS;
+        }
+
+        return false;
+    }
+
+    public function setStatsRetentionDays($days): self
+    {
+        $this->statsRetentionDays = max(self::MIN_RETENTION_DAYS, min(self::MAX_RETENTION_DAYS, (int) $days));
+
+        return $this;
     }
 
     public function getDefaultLanguage(): string

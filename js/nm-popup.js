@@ -29,6 +29,7 @@ class NMPopup extends HTMLElement {
 
 		this.storage = window.NotificationManager.storage;
 		this.fired = false;
+		this.initTrack();
 
 		// The frequency rule limits popups that open by themselves; a visitor clicking a trigger asked for it.
 		this.suppressed = this.storage.isSuppressed(
@@ -47,13 +48,25 @@ class NMPopup extends HTMLElement {
 
 		this.dialog.addEventListener('close', this.onClose);
 		this.dialog.addEventListener('click', this.onBackdropClick);
+		this.dialog.addEventListener('click', this.onLinkClick);
 		this.listen();
+	}
+
+	/** The server renders the statistics endpoint into the config; without it nothing is reported. */
+	initTrack() {
+		const track = window.NotificationManager.track;
+		if (track && this.config.track) track.init(this.config.track);
+	}
+
+	report(type) {
+		window.NotificationManager.track?.event(this.config.id, type);
 	}
 
 	disconnectedCallback() {
 		this.cleanup();
 		this.dialog?.removeEventListener('close', this.onClose);
 		this.dialog?.removeEventListener('click', this.onBackdropClick);
+		this.dialog?.removeEventListener('click', this.onLinkClick);
 	}
 
 	readConfig() {
@@ -142,7 +155,10 @@ class NMPopup extends HTMLElement {
 	}
 
 	open() {
-		if (!this.dialog.open) this.dialog.showModal();
+		if (this.dialog.open) return;
+
+		this.dialog.showModal();
+		this.report('i');
 	}
 
 	/** Stop the automatic triggers; the click trigger stays so the popup can be reopened on request. */
@@ -157,7 +173,12 @@ class NMPopup extends HTMLElement {
 		this.cleanups = [];
 	}
 
+	onLinkClick = (event) => {
+		if (event.target.closest('.nm-popup__link')) this.report('c');
+	};
+
 	onClose = () => {
+		this.report('d');
 		this.storage.markClosed(this.config.id, this.config.frequency, this.config.version);
 	};
 
