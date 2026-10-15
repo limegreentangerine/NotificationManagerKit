@@ -1,11 +1,18 @@
 <?php
 
-namespace Concrete\Package\ComposerPackage;
+namespace Concrete\Package\NotificationManagerKit;
 
-use Concrete\Core\Package\Package;
+use Concrete\Core\Entity\Package;
+use ClassKit\Package\PackageController;
+use Concrete\Core\Support\Facade\{Events, Route};
+use NotificationManagerKit\Events\NotificationManager;
+use ClassKit\Package\Traits\{AttributeTrait, BlockTrait, PageTrait};
 
-class Controller extends Package
+class Controller extends PackageController
 {
+    use AttributeTrait;
+    use BlockTrait;
+    use PageTrait;
     /**
      * The packages handle.
      * Note that this must be unique in the
@@ -13,14 +20,14 @@ class Controller extends Package
      *
      * @var string
      */
-    protected $pkgHandle = 'composer_package';
+    protected $pkgHandle = 'notification_manager_kit';
 
     /**
      * The packages version.
      *
      * @var string
      */
-    protected $pkgVersion = '0.0.0';
+    protected $pkgVersion = '1.0.0';
 
     /**
      * The minimum Concrete version compatible with the package.
@@ -83,7 +90,21 @@ class Controller extends Package
      * @var array
      */
     protected $pkgAutoloaderRegistries = [
-        'src' => '\ComposerPackage',
+        'src' => '\NotificationManagerKit',
+    ];
+
+    /**
+     * Tables dropped on uninstall when "purge database tables" is ticked, children before parents.
+     *
+     * @var array
+     */
+    protected $databaseTables = [
+        'nmNotificationStats',
+        'nmNotification_Contents',
+        'nmNotificationPages',
+        'nmNotificationContents',
+        'nmNotifications',
+        'nmSettings',
     ];
 
     /**
@@ -93,15 +114,55 @@ class Controller extends Package
      *
      * @var array
      */
-    protected $tasks = [];
+    protected $tasks = [
+        'prune_notification_statistics' => \NotificationManagerKit\Command\Task\Controller\PruneStatisticsController::class,
+    ];
 
     public function getPackageName()
     {
-        return t('composer_name');
+        return t('Notification Manager');
     }
 
     public function getPackageDescription()
     {
-        return t('composer_description');
+        return t('Add banners and popups to your site, with scheduling, page targeting and per-locale content.');
     }
+
+    public function on_start()
+    {
+        parent::on_start();
+
+        Events::addListener('on_before_render', function () {
+            NotificationManager::onBeforeRender();
+        });
+    }
+
+    public function installOrUpgrade(Package $pkg)
+    {
+        $this->installContentFile('tasks.xml');
+
+        $this->addSinglePage('/dashboard/notification_manager', $pkg, t('Notification Manager'), t('Manage banners and popups'));
+        $this->addSinglePage('/dashboard/notification_manager/notifications', $pkg, t('Notifications'), t('Banners and popups'));
+        $this->addSinglePage('/dashboard/notification_manager/statistics', $pkg, t('Statistics'), t('Notification statistics and downloads'));
+        $this->addSinglePage('/dashboard/notification_manager/settings', $pkg, t('Settings'), t('Notification Manager settings'));
+
+        \NotificationManagerKit\Support\Catalog::flush();
+    }
+
+    public function registerRoutes(): void
+    {
+        // Public: pages are cached, so the visitor's browser reports what it showed. See Ajax\Track.
+        Route::register(
+            '/ccm/notification_manager_kit/track',
+            '\NotificationManagerKit\Ajax\Track::collect',
+            'notification_manager_kit.track',
+            [],
+            [],
+            '',
+            [],
+            ['POST'],
+        );
+    }
+
+    public function registerEvents(): void {}
 }

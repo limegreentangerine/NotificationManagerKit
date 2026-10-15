@@ -2,11 +2,15 @@
 
 $finder = PhpCsFixer\Finder::create()
     ->in([
+        __DIR__ . '/controllers',
+        __DIR__ . '/elements',
+        __DIR__ . '/single_pages',
         __DIR__ . '/src',
         __DIR__ . '/tests'
     ])
     ->append([
-        __DIR__ . '/controller.php'
+        __DIR__ . '/controller.php',
+        __DIR__ . '/phpstan-bootstrap.php'
     ])
     ->exclude([
         'vendor',

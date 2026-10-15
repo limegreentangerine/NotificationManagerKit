@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<concrete5-cif version="1.0">
+    <tasks>
+        <task handle="prune_notification_statistics" package="notification_manager_kit" />
+    </tasks>
+
+    <tasksets>
+        <taskset handle="notification_manager_kit" name="Notification Manager">
+            <task handle="prune_notification_statistics" />
+        </taskset>
+    </tasksets>
+</concrete5-cif>

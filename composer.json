@@ -1,22 +1,24 @@
 {
-	"name": "limegreentangerine/composer_package",
-	"description": "composer_description",
+	"name": "limegreentangerine/notification_manager_kit",
+	"description": "Notification Manager",
 	"type": "concrete5-package",
 	"license": "proprietary",
 	"minimum-stability": "stable",
 	"autoload": {
 		"psr-4": {
-			"ComposerPackage\\": "src/"
+			"NotificationManagerKit\\": "src/"
 		}
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"ComposerPackage\\Tests\\": "tests/"
+			"NotificationManagerKit\\Tests\\": "tests/"
 		}
 	},
 	"authors": [],
 	"require": {
-		"limegreentangerine/class_kit": "^1.0"
+		"limegreentangerine/class_kit": "^1.0",
+		"openspout/openspout": "^5.12",
+		"dompdf/dompdf": "^3.1"
 	},
 	"require-dev": {
 		"php": "^8.4",

@@ -1,0 +1,118 @@
+/*
+ * Override any of these on :root (or nm-popup) to restyle without touching the package.
+ */
+nm-popup {
+	--nm-popup-bg: var(--bs-body-bg, #fff);
+	--nm-popup-color: var(--bs-body-color, #212529);
+	--nm-popup-accent: var(--bs-primary, #1f4e79);
+	--nm-popup-accent-color: var(--bs-white, #fff);
+	--nm-popup-radius: 0.5rem;
+}
+
+/* A closed <dialog> is display:none, so it is out of the tab order and the accessibility tree. */
+.nm-popup {
+	box-sizing: border-box;
+	width: min(60rem, calc(100vw - 2rem));
+	max-height: calc(100dvh - 2rem);
+	padding: 0;
+	border: 0;
+	border-radius: var(--nm-popup-radius);
+	background: var(--nm-popup-bg);
+	color: var(--nm-popup-color);
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+
+.nm-popup::backdrop {
+	background: rgb(0 0 0 / 0.6);
+}
+
+.nm-popup[open] {
+	animation: nm-popup-in 200ms ease-out;
+}
+
+@keyframes nm-popup-in {
+	from {
+		opacity: 0;
+		transform: translateY(0.5rem);
+	}
+}
+
+/* Stop the page behind scrolling while the modal is open. */
+body:has(.nm-popup[open]) {
+	overflow: hidden;
+}
+
+.nm-popup__close-form {
+	position: absolute;
+	inset-block-start: 0.5rem;
+	inset-inline-end: 0.5rem;
+	margin: 0;
+	z-index: 1;
+}
+
+.nm-popup__close {
+	width: 2.5rem;
+	height: 2.5rem;
+	border: 0;
+	border-radius: 50%;
+	background: var(--nm-popup-accent);
+	color: var(--nm-popup-accent-color);
+	cursor: pointer;
+}
+
+.nm-popup__close::before {
+	content: '\00d7';
+	font-size: 1.5rem;
+	line-height: 1;
+}
+
+.nm-popup__close:focus-visible,
+.nm-popup__link:focus-visible {
+	outline: 2px solid var(--nm-popup-color);
+	outline-offset: 2px;
+}
+
+.nm-popup__body {
+	display: grid;
+	gap: 1.5rem;
+	padding: 2rem;
+}
+
+.nm-popup__media img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+
+.nm-popup__title {
+	margin-block: 0 1rem;
+	padding-inline-end: 2.5rem;
+}
+
+.nm-popup__link {
+	display: inline-block;
+	margin-block-start: 1rem;
+	padding: 0.5rem 1.25rem;
+	border-radius: var(--nm-popup-radius);
+	background: var(--nm-popup-accent);
+	color: var(--nm-popup-accent-color);
+	text-decoration: none;
+}
+
+@media (min-width: 992px) {
+	.nm-popup__body:has(.nm-popup__media) {
+		grid-template-columns: 1fr 1fr;
+		align-items: center;
+	}
+
+	.nm-popup__media {
+		order: 2;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nm-popup[open] {
+		animation: none;
+	}
+}
