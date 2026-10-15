@@ -27,7 +27,7 @@ class Controller extends PackageController
      *
      * @var string
      */
-    protected $pkgVersion = '0.3.0';
+    protected $pkgVersion = '0.4.0';
 
     /**
      * The minimum Concrete version compatible with the package.
@@ -143,6 +143,7 @@ class Controller extends PackageController
 
         $this->addSinglePage('/dashboard/notification_manager', $pkg, t('Notification Manager'), t('Manage banners and popups'));
         $this->addSinglePage('/dashboard/notification_manager/notifications', $pkg, t('Notifications'), t('Banners and popups'));
+        $this->addSinglePage('/dashboard/notification_manager/statistics', $pkg, t('Statistics'), t('Notification statistics and downloads'));
         $this->addSinglePage('/dashboard/notification_manager/settings', $pkg, t('Settings'), t('Notification Manager settings'));
 
         \NotificationManagerKit\Support\Catalog::flush();

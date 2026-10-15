@@ -62,12 +62,20 @@ final readonly class StatsSummary
      */
     public function clickRate(): ?float
     {
-        return $this->impressions > 0 ? min(1.0, $this->clicks / $this->impressions) : null;
+        return self::rate($this->clicks, $this->impressions);
     }
 
     public function dismissalRate(): ?float
     {
-        return $this->impressions > 0 ? min(1.0, $this->dismissals / $this->impressions) : null;
+        return self::rate($this->dismissals, $this->impressions);
+    }
+
+    /**
+     * $part as a fraction of $whole (impressions), or null when nothing was shown; capped at 1.
+     */
+    public static function rate(int $part, int $whole): ?float
+    {
+        return $whole > 0 ? min(1.0, $part / $whole) : null;
     }
 
     public static function percent(?float $fraction): string

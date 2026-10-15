@@ -16,7 +16,9 @@
 	},
 	"authors": [],
 	"require": {
-		"limegreentangerine/class_kit": "^1.0"
+		"limegreentangerine/class_kit": "^1.0",
+		"openspout/openspout": "^5.12",
+		"dompdf/dompdf": "^3.1"
 	},
 	"require-dev": {
 		"php": "^8.4",

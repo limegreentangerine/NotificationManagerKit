@@ -2,6 +2,37 @@
 
 Notable changes to this project are documented here.
 
+## 0.4.0
+
+### Added
+
+- A Statistics page under Notification Manager, with filters (last 7, 30 or 90
+  days or a custom range, type, and a single notification), totals, daily column
+  charts for shown, clicks and dismissed, a table per notification and the daily
+  figures. Filters are in the address, so a view can be bookmarked.
+- Downloads of the report the page is showing, in Excel (`.xlsx`: Summary, Daily
+  and Report sheets), JSON, or PDF (totals and the per-notification table).
+- Tests for filter parsing, report building, chart geometry, export formatting,
+  and the Excel and PDF writers (the workbook is read back to check it).
+- A test that every PHP file under `src/` declares a class, because Concrete
+  executes anything else there when it scans for entities.
+
+### Changed
+
+- Adds the `openspout/openspout` and `dompdf/dompdf` Composer dependencies.
+  Run Composer in your site after upgrading. Needs the `zip`, `dom`, `mbstring`
+  and `gd` PHP extensions.
+- The Statistics dashboard page is added by the package upgrade; there is no
+  schema change.
+
+### Security
+
+- Excel cells are written as explicit text, so a notification name that starts
+  with `=`, `+`, `-` or `@` can't run as a formula. The PDF template escapes every
+  value, and dompdf runs with remote files, PHP and JavaScript switched off.
+- The date range, type and notification in the address are validated and fall
+  back to defaults; only the three known download formats are accepted.
+
 ## 0.3.0
 
 ### Added

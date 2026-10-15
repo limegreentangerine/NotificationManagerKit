@@ -1,0 +1,99 @@
+/* Column charts on the dashboard statistics page. Colours come from the dashboard's own theme variables. */
+
+.nm-chart {
+	margin: 0 0 1.75rem;
+}
+
+.nm-chart figcaption {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+}
+
+.nm-chart__note {
+	font-weight: 400;
+	color: var(--bs-secondary-color, #6c757d);
+}
+
+.nm-chart__total {
+	font-variant-numeric: tabular-nums;
+}
+
+.nm-chart__body {
+	display: flex;
+	gap: 0.5rem;
+	height: 8rem;
+}
+
+.nm-chart__axis {
+	position: relative;
+	width: 2.75rem;
+	flex: none;
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--bs-secondary-color, #6c757d);
+}
+
+.nm-chart__axis span {
+	position: absolute;
+	right: 0;
+	transform: translateY(50%);
+	line-height: 1;
+}
+
+.nm-chart__plot {
+	position: relative;
+	flex: 1;
+	min-width: 0;
+	border-bottom: 1px solid var(--bs-border-color, rgba(128, 128, 128, 0.5));
+}
+
+.nm-chart__grid span {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 0;
+	border-top: 1px solid var(--bs-border-color-translucent, rgba(128, 128, 128, 0.25));
+}
+
+.nm-chart__bars {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	justify-content: space-around;
+	gap: 2px;
+}
+
+/* Each column is the hover target and is as tall as the plot; the bar inside grows from the baseline. */
+.nm-chart__col {
+	flex: 1 1 0;
+	min-width: 0;
+	max-width: 24px;
+	display: flex;
+	align-items: flex-end;
+}
+
+.nm-chart__bar {
+	width: 100%;
+	background: var(--bs-primary, #0d6efd);
+	border-radius: 4px 4px 0 0;
+	min-height: 2px;
+}
+
+.nm-chart__bar.is-empty {
+	min-height: 0;
+}
+
+.nm-chart__col:hover .nm-chart__bar {
+	filter: brightness(1.25);
+}
+
+.nm-chart__x {
+	display: flex;
+	justify-content: space-between;
+	margin: 0.35rem 0 0 3.25rem;
+	font-size: 0.75rem;
+	color: var(--bs-secondary-color, #6c757d);
+}

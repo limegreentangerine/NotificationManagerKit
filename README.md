@@ -14,14 +14,15 @@ Banners and popups for Concrete CMS, managed from one dashboard.
 - Optional audience rules per notification: new or returning visitors, device, a URL parameter and the
   referring site. They are checked in the browser, so pages stay cacheable.
 - Statistics: how often each notification was shown, clicked and dismissed, as daily totals with no visitor
-  data, shown on the notification and in the list.
+  data, shown on the notification and in the list, with a Statistics page for charts, filters and downloads
+  (Excel, JSON, PDF).
 - Settings live in the `nmSettings` table, not in package config files.
 - Notifications are one Doctrine entity hierarchy (`AbstractNotification`, single table, discriminator
   `banner` | `popup`).
 
 ## Dashboard
 
-`Dashboard > Notification Manager` has **Notifications** (add, edit, duplicate, delete) and **Settings** (enable banners,
+`Dashboard > Notification Manager` has **Notifications** (add, edit, duplicate, delete), **Statistics** and **Settings** (enable banners,
 enable popups, fallback language, excluded paths, statistics, bundled CSS on/off).
 
 **Duplicate** (on a notification's details page) copies the type settings, schedule, targeting, audience rules and
@@ -83,6 +84,25 @@ dismissal rate, and a daily table), and the list shows views and clicks per noti
   **Prune Notification Statistics** task. Schedule it to run daily from the Automation section of the dashboard;
   `concrete task:prune-notification-statistics` runs it from the command line.
 
+### The Statistics page
+
+`Dashboard > Notification Manager > Statistics` reports across every notification.
+
+- **Filters**: last 7, 30 or 90 days, or a custom range (up to two years), plus type (banners or popups) and a single
+  notification. The filters are in the address, so a filtered view can be bookmarked or shared.
+- **On the page**: totals, a daily column chart each for shown, clicks and dismissed (ranges over 110 days are shown
+  by week), a table with one row per notification, and the day by day figures.
+- **Downloads** (the buttons at the top use whatever filters are chosen):
+    - **Excel** (`.xlsx`): a _Summary_ sheet (one row per notification and a total), a _Daily_ sheet (one row per
+      notification per day with activity) and a _Report_ sheet recording the range and filters. Rates are real
+      numbers formatted as percentages, so they sort and calculate; a notification named `=SUM(...)` is stored as
+      text, never as a formula.
+    - **JSON**: the range, filters, totals, a list of notifications and the daily rows, with rates as fractions.
+    - **PDF**: the totals and the per-notification table on landscape A4. The daily breakdown is left to the
+      other two formats. The PDF font covers Latin, Greek and Cyrillic; names in Chinese, Japanese or Korean show as
+      empty boxes (the Excel and JSON downloads are unaffected).
+- Column names in the downloads are always English, so they don't change with the dashboard's language.
+
 The endpoint is public and cannot use a CSRF token, so it is defensive instead: it only adds to notifications that
 are live, ignores unknown ids and languages, rejects cross-site requests, drops bots and signed-in editors,
 limits one address to 300 events a minute (approximate under heavy parallel load), and always answers `204`
@@ -93,6 +113,10 @@ with no body.
 Entity changes are applied by the package upgrade, which Concrete only runs when `$pkgVersion` in
 `controller.php` increases. Bump it, then run `c5:package:update notification_manager_kit` (or update from
 the dashboard).
+
+After upgrading to 0.4.0 run Composer in your site so that its `vendor/` gets the new libraries (OpenSpout and
+dompdf, used for the Excel and PDF downloads). Concrete also keeps each administrator's dashboard menu in their
+session, so the new **Statistics** item appears once they sign out and back in.
 
 ## Security and performance notes
 
@@ -108,6 +132,7 @@ the dashboard).
 
 - PHP 8.4 or later.
 - Composer.
+- PHP extensions `zip` (Excel files), `dom`, `mbstring` and `gd` (PDF files), all of which Composer checks for.
 - Node.js and npm, used by the Composer post-install script and JavaScript
   formatting commands.
 - Access to the private Composer registry at

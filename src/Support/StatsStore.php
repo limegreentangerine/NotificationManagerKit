@@ -69,6 +69,30 @@ final class StatsStore
     }
 
     /**
+     * The day by day counters for some notifications across a filter's range, every language added together.
+     *
+     * @param string[] $ids
+     *
+     * @return list<array<string, mixed>> notificationId, statDate, impressions, clicks, dismissals
+     */
+    public function rows(array $ids, StatsFilter $filter): array
+    {
+        $ids = array_values(array_unique(array_filter($ids, 'is_string')));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        return $this->db->fetchAllAssociative(
+            'SELECT notificationId, statDate, SUM(impressions) AS impressions, SUM(clicks) AS clicks, SUM(dismissals) AS dismissals
+             FROM ' . self::TABLE . '
+             WHERE statDate BETWEEN ? AND ? AND notificationId IN (' . implode(',', array_fill(0, count($ids), '?')) . ')
+             GROUP BY notificationId, statDate',
+            [$filter->from->format('Y-m-d'), $filter->to->format('Y-m-d'), ...$ids],
+        );
+    }
+
+    /**
      * Impressions and clicks for several notifications at once (one query), for the list.
      *
      * @param string[] $ids
