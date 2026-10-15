@@ -11,7 +11,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/limegreentangerine/notification_manager_kit.git"
+		"url": "git+https://github.com/limegreentangerine/NotificationManagerKit.git"
 	},
 	"keywords": [],
 	"author": "Dave Hendy <david@limegreentangerine.co.uk>",
@@ -24,9 +24,9 @@
 	"license": "ISC",
 	"type": "commonjs",
 	"bugs": {
-		"url": "https://github.com/limegreentangerine/notification_manager_kit/issues"
+		"url": "https://github.com/limegreentangerine/NotificationManagerKit/issues"
 	},
-	"homepage": "https://github.com/limegreentangerine/notification_manager_kit#readme",
+	"homepage": "https://github.com/limegreentangerine/NotificationManagerKit#readme",
 	"devDependencies": {
 		"jsdom": "^26.1.0",
 		"prettier": "^3.9.6",
