@@ -14,6 +14,8 @@ if (in_array($controller->getTask(), ['add', 'details', 'save'], true)) {
             'frequencies' => $frequencies,
             'scrollUnits' => $scrollUnits,
             'linkTypes' => $linkTypes,
+            'visitors' => $visitors,
+            'deviceTypes' => $deviceTypes,
             'h' => [
                 'al' => $concrete_asset_library,
                 'ps' => $form_page_selector,

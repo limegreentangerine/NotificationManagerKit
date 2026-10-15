@@ -15,7 +15,7 @@ use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, Pop
  */
 final class Catalog
 {
-    private const KEY = 'notification_manager_kit/catalog/v2';
+    private const KEY = 'notification_manager_kit/catalog/v3';
     private const LIFETIME = 43200;
 
     private static ?CatalogData $memo = null;
@@ -146,6 +146,7 @@ final class Catalog
             $linkText,
             $image,
             $options,
+            $notification->getAudience()->toArray(),
         );
     }
 

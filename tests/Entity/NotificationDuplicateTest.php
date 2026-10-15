@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NotificationManagerKit\Tests\Entity;
 
 use PHPUnit\Framework\TestCase;
+use NotificationManagerKit\Support\Audience;
 use NotificationManagerKit\Entity\{BannerNotification, NotificationContent, PopupNotification};
 
 final class NotificationDuplicateTest extends TestCase
@@ -57,6 +58,7 @@ final class NotificationDuplicateTest extends TestCase
             ->addData($this->content('en', 'Sale'))
             ->addData($this->content('fr', 'Soldes'));
         $original->setTransition('ticker')->setInterval(9000)->setDismissible(true);
+        $original->setAudience(Audience::fromArray(['visitor' => 'new', 'devices' => ['mobile']]));
 
         $copy = $original->duplicate();
 
@@ -73,6 +75,8 @@ final class NotificationDuplicateTest extends TestCase
         $this->assertSame('ticker', $copy->getTransition());
         $this->assertSame(9000, $copy->getInterval());
         $this->assertTrue($copy->isDismissible());
+        $this->assertEquals($original->getAudience(), $copy->getAudience());
+        $this->assertSame(['visitor' => 'new', 'devices' => ['mobile']], $copy->getAudience()->toArray());
     }
 
     public function testCopyOwnsItsContentAndPagesSoEditsDoNotLeakBack(): void

@@ -6,7 +6,7 @@ use Concrete\Core\Asset\AssetList;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Entity\File\File as FileEntity;
 use Concrete\Core\Page\Controller\DashboardPageController;
-use NotificationManagerKit\Support\{Catalog, LinkResolver, Schedule};
+use NotificationManagerKit\Support\{Audience, Catalog, LinkResolver, Schedule};
 use Concrete\Package\NotificationManagerKit\Controller\Search\Notifications as SearchController;
 use NotificationManagerKit\Entity\{AbstractNotification, BannerNotification, NotificationContent, PopupNotification, Settings};
 
@@ -45,6 +45,8 @@ class Notifications extends DashboardPageController
         $this->set('frequencies', array_map(fn($label) => t($label), PopupNotification::FREQUENCIES));
         $this->set('scrollUnits', array_map(fn($label) => t($label), PopupNotification::SCROLL_UNITS));
         $this->set('linkTypes', array_map(fn($label) => t($label), LinkResolver::TYPES));
+        $this->set('visitors', array_map(fn($label) => t($label), Audience::VISITORS));
+        $this->set('deviceTypes', array_map(fn($label) => t($label), Audience::DEVICES));
     }
 
     protected function validate(array $post, string $type): void
@@ -81,6 +83,7 @@ class Notifications extends DashboardPageController
         }
 
         $this->validateLinks($post);
+        $this->validateAudience($post);
 
         if ($type === AbstractNotification::TYPE_POPUP) {
             $this->validatePopup($post);
@@ -110,6 +113,40 @@ class Notifications extends DashboardPageController
                 $this->error->add($message);
             }
         }
+    }
+
+    /**
+     * Audience::fromArray() quietly drops anything invalid, so what the admin typed is checked here and reported
+     * rather than silently ignored.
+     */
+    protected function validateAudience(array $post): void
+    {
+        $key = trim((string) ($post['audienceParamKey'] ?? ''));
+        $value = trim((string) ($post['audienceParamValue'] ?? ''));
+        $referrer = trim((string) ($post['audienceReferrer'] ?? ''));
+
+        if ($key !== '' && !Audience::isValidParamKey($key)) {
+            $this->error->add(t('The URL parameter name can only use letters, numbers, dots, hyphens and underscores, and must start with a letter or underscore.'));
+        }
+
+        if ($key === '' && $value !== '') {
+            $this->error->add(t('Enter the URL parameter name to go with its value.'));
+        }
+
+        if ($referrer !== '' && Audience::normaliseHost($referrer) === null) {
+            $this->error->add(t('Enter the referring site as a domain name, eg. google.com.'));
+        }
+    }
+
+    protected function postedAudience(array $post): Audience
+    {
+        return Audience::fromArray([
+            'visitor' => $post['audienceVisitor'] ?? 'any',
+            'devices' => $post['audienceDevices'] ?? [],
+            'paramKey' => $post['audienceParamKey'] ?? '',
+            'paramValue' => $post['audienceParamValue'] ?? '',
+            'referrer' => $post['audienceReferrer'] ?? '',
+        ]);
     }
 
     protected function postedLinkType(array $post, string $lang): string
@@ -179,7 +216,8 @@ class Notifications extends DashboardPageController
             ->setEndDate($dates->translate('endDate', $post, true) ?: null)
             ->setRepeatEvent($post['repeatEvent'] ?? 'none')
             ->setDisplayScope($post['displayScope'] ?? 'all')
-            ->setPageIds($entity->getDisplayScope() === 'specific' ? $this->postedPageIds($post) : []);
+            ->setPageIds($entity->getDisplayScope() === 'specific' ? $this->postedPageIds($post) : [])
+            ->setAudience($this->postedAudience($post));
 
         if ($entity instanceof BannerNotification) {
             $entity->setTransition($post['transition'] ?? 'fade')
@@ -277,6 +315,11 @@ class Notifications extends DashboardPageController
             'triggerScrollElementSelector' => (string) ($post['triggerScrollElementSelector'] ?? $popup->getTriggerScrollElementSelector()),
             'triggerOnClick' => $post !== null ? isset($post['triggerOnClick']) : $popup->isTriggerOnClick(),
             'triggerClickSelector' => (string) ($post['triggerClickSelector'] ?? $popup->getTriggerClickSelector()),
+            'audienceVisitor' => (string) ($post['audienceVisitor'] ?? $entity?->getAudience()->visitor ?? 'any'),
+            'audienceDevices' => $post !== null ? array_values(array_filter((array) ($post['audienceDevices'] ?? []), 'is_string')) : ($entity?->getAudience()->devices ?? []),
+            'audienceParamKey' => (string) ($post['audienceParamKey'] ?? $entity?->getAudience()->paramKey ?? ''),
+            'audienceParamValue' => (string) ($post['audienceParamValue'] ?? $entity?->getAudience()->paramValue ?? ''),
+            'audienceReferrer' => (string) ($post['audienceReferrer'] ?? $entity?->getAudience()->referrer ?? ''),
             'locales' => [],
         ];
 

@@ -13,7 +13,7 @@ $rotating = count($banners) > 1;
 <nm-banner class="nm-banner" role="region" aria-label="<?php echo Output::e(t('Announcements')) ?>" data-transition="<?php echo Output::e($transition) ?>" data-interval="<?php echo (int) $interval ?>"<?php echo $rotating ? ' data-rotating' : '' ?>>
     <div class="nm-banner__track">
         <?php foreach ($banners as $i => $banner) { ?>
-            <div class="nm-banner__item<?php echo $i === 0 ? ' is-active' : '' ?>" data-id="<?php echo Output::e($banner->id) ?>" data-version="<?php echo (int) $banner->version ?>">
+            <div class="nm-banner__item<?php echo $i === 0 ? ' is-active' : '' ?>" data-id="<?php echo Output::e($banner->id) ?>" data-version="<?php echo (int) $banner->version ?>"<?php echo $banner->audience !== [] ? ' data-audience="' . Output::e(Output::json($banner->audience)) . '" hidden' : '' ?>>
                 <div class="nm-banner__content">
                     <?php echo $banner->contentHtml ?>
                     <?php if ($banner->linkUrl !== '' && $banner->linkText !== '') { ?>

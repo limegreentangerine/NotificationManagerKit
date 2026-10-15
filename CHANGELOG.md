@@ -2,6 +2,32 @@
 
 Notable changes to this project are documented here.
 
+## 0.2.0
+
+### Added
+
+- Audience targeting for banners and popups. Optional conditions, all of which
+  must match: new or returning visitor, device (mobile, tablet or desktop by
+  window width), a URL parameter (with an optional value, eg.
+  `?utm_campaign=spring`), and the referring site. They are evaluated in the
+  browser, so full page caching still works.
+- Duplicate button on a notification's details page. It copies the type
+  settings, schedule, targeting, audience rules and every locale's content
+  (including images and links). The copy is inactive and its names are prefixed
+  "Copy of".
+- Tests for audience rules (PHP and browser), duplication, and popup candidate
+  selection.
+
+### Changed
+
+- `nmNotifications` gains an `audienceRules` column. Upgrading the package
+  applies the schema change; existing notifications are for everyone.
+- When a popup has audience rules the page carries the next popups in priority
+  order too, and the browser keeps the first one that applies to the visitor.
+  Pages without audience rules still carry exactly one popup.
+- The cached notification catalog is rebuilt after upgrading (its cache key
+  changed), so nothing needs flushing by hand.
+
 ## 0.1.2
 
 ### Added

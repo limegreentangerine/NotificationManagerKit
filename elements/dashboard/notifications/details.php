@@ -111,6 +111,48 @@ $editor->setAllowFileManager(false);
         </div>
     </fieldset>
 
+    <fieldset>
+        <legend><?php echo t('Audience') ?></legend>
+        <div class="help-block form-text mb-3"><?php echo t('Optional. Checked in the visitor\'s browser, so pages can still be cached. A visitor must match every condition you set; leave a condition blank to ignore it.') ?></div>
+
+        <div class="form-group mb-3">
+            <?php echo $form->label('audienceVisitor', t('Visitors')) ?>
+            <?php echo $form->select('audienceVisitor', $visitors, $v['audienceVisitor']) ?>
+            <div class="help-block form-text"><?php echo t('A visitor is new for the whole of their first session, and returning from their next one. This relies on the browser keeping a small marker; a visitor who clears it counts as new.') ?></div>
+        </div>
+
+        <div class="form-group mb-3">
+            <?php echo $form->label('audienceDevices_mobile', t('Devices')) ?>
+            <div>
+                <?php foreach ($deviceTypes as $value => $label) { ?>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" name="audienceDevices[]" id="audienceDevices_<?php echo O::e($value) ?>" value="<?php echo O::e($value) ?>"<?php echo in_array($value, $v['audienceDevices'], true) ? ' checked' : '' ?>>
+                        <label class="form-check-label" for="audienceDevices_<?php echo O::e($value) ?>"><?php echo O::e($label) ?></label>
+                    </div>
+                <?php } ?>
+            </div>
+            <div class="help-block form-text"><?php echo t('Based on window width: mobile under 768px, tablet under 1024px, otherwise desktop. Tick none to show on all devices.') ?></div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6 form-group">
+                <?php echo $form->label('audienceParamKey', t('URL parameter')) ?>
+                <?php echo $form->text('audienceParamKey', $v['audienceParamKey'], ['maxlength' => 64, 'placeholder' => 'utm_campaign']) ?>
+            </div>
+            <div class="col-md-6 form-group">
+                <?php echo $form->label('audienceParamValue', t('Parameter value')) ?>
+                <?php echo $form->text('audienceParamValue', $v['audienceParamValue'], ['maxlength' => 100, 'placeholder' => 'spring-sale']) ?>
+            </div>
+            <div class="help-block form-text"><?php echo t('Show only to visitors who arrived with this parameter, eg. ?utm_campaign=spring-sale. Leave the value blank to match any value. It is remembered for the rest of their visit.') ?></div>
+        </div>
+
+        <div class="form-group mb-3">
+            <?php echo $form->label('audienceReferrer', t('Referring site')) ?>
+            <?php echo $form->text('audienceReferrer', $v['audienceReferrer'], ['maxlength' => 253, 'placeholder' => 'google.com']) ?>
+            <div class="help-block form-text"><?php echo t('Show only to visitors who arrived from this site (or one of its subdomains). Links within your own site don\'t count; the original referrer is remembered for the visit.') ?></div>
+        </div>
+    </fieldset>
+
     <fieldset data-nm-type="banner">
         <legend><?php echo t('Banner Options') ?></legend>
 

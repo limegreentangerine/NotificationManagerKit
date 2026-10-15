@@ -19,6 +19,9 @@ $config = [
     'scrollElement' => (string) ($o['scrollElement'] ?? ''),
     'click' => (string) ($o['click'] ?? ''),
 ];
+if ($popup->audience !== []) {
+    $config['audience'] = $popup->audience;
+}
 ?>
 <nm-popup data-config="<?php echo Output::e(Output::json($config)) ?>">
     <dialog class="nm-popup" aria-labelledby="<?php echo Output::e($titleId) ?>">

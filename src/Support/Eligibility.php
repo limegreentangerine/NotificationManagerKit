@@ -11,7 +11,11 @@ use NotificationManagerKit\Entity\AbstractNotification;
 final class Eligibility
 {
     /**
-     * @return array{banners: NotificationView[], popup: NotificationView|null}
+     * `popup` is the highest priority popup. `popups` is the ordered list of popups the page should carry: audience
+     * rules are checked in the browser, so when the top popup may not apply to a visitor the next one has to be on
+     * the page too. The list ends at the first popup with no rules, since nothing below it could ever be reached.
+     *
+     * @return array{banners: NotificationView[], popup: NotificationView|null, popups: NotificationView[]}
      */
     public static function select(CatalogData $catalog, int $cID, ?\DateTimeInterface $now = null): array
     {
@@ -36,6 +40,15 @@ final class Eligibility
         usort($banners, $byPriority);
         usort($popups, $byPriority);
 
-        return ['banners' => $banners, 'popup' => $popups[0] ?? null];
+        $candidates = [];
+        foreach ($popups as $popup) {
+            $candidates[] = $popup;
+
+            if ($popup->audience === []) {
+                break;
+            }
+        }
+
+        return ['banners' => $banners, 'popup' => $popups[0] ?? null, 'popups' => $candidates];
     }
 }

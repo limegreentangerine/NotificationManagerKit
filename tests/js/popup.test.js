@@ -22,12 +22,14 @@ const base = {
 beforeAll(() => {
 	polyfillDialog();
 	loadScript('nm-storage.js');
+	loadScript('nm-audience.js');
 	loadScript('nm-popup.js');
 });
 
 beforeEach(() => {
 	localStorage.clear();
 	sessionStorage.clear();
+	window.NotificationManager.audience.reset();
 	document.body.innerHTML = '';
 	vi.useFakeTimers();
 });
@@ -130,5 +132,70 @@ describe('<nm-popup>', () => {
 		expect(document.querySelector('dialog').open).toBe(true);
 		expect(() => document.querySelector('dialog').close()).not.toThrow();
 		vi.restoreAllMocks();
+	});
+});
+
+describe('<nm-popup> audience', () => {
+	it('opens for the visitors it is for', () => {
+		document.body.innerHTML = popup({ ...base, onLoad: true, audience: { visitor: 'new' } });
+		vi.runAllTimers();
+
+		expect(document.querySelector('dialog').open).toBe(true);
+	});
+
+	it('removes itself for everyone else, and never opens', () => {
+		document.body.innerHTML = popup({ ...base, onLoad: true, audience: { visitor: 'returning' } });
+		vi.runAllTimers();
+
+		expect(document.querySelector('nm-popup')).toBeNull();
+	});
+
+	it('does not store a close for a popup the visitor never saw', () => {
+		document.body.innerHTML = popup({ ...base, onLoad: true, audience: { visitor: 'returning' } });
+		vi.runAllTimers();
+
+		expect(localStorage.getItem('nm_closed_p1')).toBeNull();
+	});
+
+	it('fails closed when the audience script did not load', () => {
+		const audience = window.NotificationManager.audience;
+		delete window.NotificationManager.audience;
+		document.body.innerHTML = popup({ ...base, onLoad: true, audience: { visitor: 'new' } });
+		window.NotificationManager.audience = audience;
+		vi.runAllTimers();
+
+		expect(document.querySelector('nm-popup')).toBeNull();
+	});
+});
+
+describe('<nm-popup> one per page', () => {
+	const two = (first, second) => popup({ ...base, ...first, id: 'first' }) + popup({ ...base, ...second, id: 'second' });
+
+	it('keeps the first popup and drops the rest', () => {
+		document.body.innerHTML = two({ onLoad: true }, { onLoad: true });
+		vi.runAllTimers();
+
+		const popups = [...document.querySelectorAll('nm-popup')];
+		expect(popups.length).toBe(1);
+		expect(JSON.parse(popups[0].dataset.config).id).toBe('first');
+		expect(popups[0].querySelector('dialog').open).toBe(true);
+	});
+
+	it('falls through to the next popup when the first is not for this visitor', () => {
+		document.body.innerHTML = two({ onLoad: true, audience: { visitor: 'returning' } }, { onLoad: true });
+		vi.runAllTimers();
+
+		const popups = [...document.querySelectorAll('nm-popup')];
+		expect(popups.length).toBe(1);
+		expect(JSON.parse(popups[0].dataset.config).id).toBe('second');
+		expect(popups[0].querySelector('dialog').open).toBe(true);
+	});
+
+	it('does not fall through when the first popup was already closed by this visitor', () => {
+		window.NotificationManager.storage.markClosed('first', 'once', 1);
+		document.body.innerHTML = two({ onLoad: true }, { onLoad: true });
+		vi.runAllTimers();
+
+		expect(document.querySelectorAll('nm-popup').length).toBe(0);
 	});
 });

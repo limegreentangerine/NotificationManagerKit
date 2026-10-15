@@ -9,9 +9,10 @@ namespace NotificationManagerKit\Support;
 final readonly class NotificationView
 {
     /**
-     * @param int[]                                                         $pageIds Only used when $scope is 'specific'
+     * @param int[]                                                         $pageIds  Only used when $scope is 'specific'
      * @param array{url: string, width: int, height: int, alt: string}|null $image
-     * @param array<string, scalar>                                         $options Type specific, already validated (transition, interval, triggers, ...)
+     * @param array<string, scalar>                                         $options  Type specific, already validated (transition, interval, triggers, ...)
+     * @param array<string, mixed>                                          $audience Audience::toArray(); empty means everyone. Checked in the browser, never here
      */
     public function __construct(
         public string $id,
@@ -28,6 +29,7 @@ final readonly class NotificationView
         public string $linkText,
         public ?array $image,
         public array $options,
+        public array $audience = [],
     ) {}
 
     public function isVisibleOnPage(int $cID): bool

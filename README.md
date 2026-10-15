@@ -11,14 +11,20 @@ Banners and popups for Concrete CMS, managed from one dashboard.
   or an email address, set per locale.
 - Both have a start/end window, an optional recurrence rule, all-pages or specific-pages targeting, and
   per-locale content with a fallback language.
+- Optional audience rules per notification: new or returning visitors, device, a URL parameter and the
+  referring site. They are checked in the browser, so pages stay cacheable.
 - Settings live in the `nmSettings` table, not in package config files.
 - Notifications are one Doctrine entity hierarchy (`AbstractNotification`, single table, discriminator
   `banner` | `popup`).
 
 ## Dashboard
 
-`Dashboard > Notification Manager` has **Notifications** (add, edit, delete) and **Settings** (enable banners,
+`Dashboard > Notification Manager` has **Notifications** (add, edit, duplicate, delete) and **Settings** (enable banners,
 enable popups, fallback language, excluded paths, bundled CSS on/off).
+
+**Duplicate** (on a notification's details page) copies the type settings, schedule, targeting, audience rules and
+every locale's content, including images and links. The copy is inactive and its names are prefixed "Copy of", so
+it never goes live until you activate it.
 
 ## Styling
 
@@ -32,6 +38,26 @@ Choose a link type per locale on the notification form. Page and file links are 
 file manager. Web addresses must be http(s) (or a plain domain such as `example.com`), phone numbers become
 `tel:` links, and email addresses become `mailto:` links; anything that doesn't validate is rejected on save.
 Leave the link text blank to use the page or file name, the number, the address or the domain.
+
+## Audience targeting
+
+The **Audience** section of the notification form narrows who sees a notification. Every condition you set
+must match; blank conditions are ignored.
+
+- **Visitors**: _new_ for the whole of a visitor's first session, _returning_ from their next one. The browser
+  keeps a small marker (`nm_visitor_seen`) to tell, and only does so when a notification actually uses this
+  condition. A visitor who clears it, or blocks storage, counts as new.
+- **Devices**: by window width. Mobile is under 768px, tablet under 1024px, desktop otherwise.
+- **URL parameter**: eg. `utm_campaign` with the value `spring-sale`. A blank value matches any value. The value
+  is remembered for the rest of the visit, so it still applies after the visitor leaves the landing page.
+- **Referring site**: a domain such as `google.com`, matched as that site or any of its subdomains. The
+  original referrer is remembered for the visit; links within your own site don't count.
+
+Rules are evaluated in the browser. The server sends the same markup to everyone, so a targeted banner is
+rendered with the `hidden` attribute and revealed for the visitors it is for. If you tick "Use my own CSS",
+make sure `.nm-banner__item[hidden]` stays hidden. When a popup has rules, the page also carries the next popups
+in priority order and the browser keeps the first one that applies; a popup the visitor has already closed is
+not replaced by the next one.
 
 ## Upgrading
 

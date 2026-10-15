@@ -9,9 +9,9 @@ use NotificationManagerKit\Support\{CatalogData, Eligibility, NotificationView, 
 
 final class EligibilityTest extends TestCase
 {
-    private function view(string $id, string $type = 'banner', int $priority = 0, ?Schedule $schedule = null, string $scope = 'all', array $pageIds = [], int $version = 1, int $created = 1): NotificationView
+    private function view(string $id, string $type = 'banner', int $priority = 0, ?Schedule $schedule = null, string $scope = 'all', array $pageIds = [], int $version = 1, int $created = 1, array $audience = []): NotificationView
     {
-        return new NotificationView($id, $type, $priority, $version, $created, $schedule ?? new Schedule(), $scope, $pageIds, 'Name', '<p>x</p>', '', '', null, []);
+        return new NotificationView($id, $type, $priority, $version, $created, $schedule ?? new Schedule(), $scope, $pageIds, 'Name', '<p>x</p>', '', '', null, [], $audience);
     }
 
     private function catalog(array $views, bool $banners = true, bool $popups = true): CatalogData
@@ -118,5 +118,46 @@ final class EligibilityTest extends TestCase
         $this->assertFalse((new CatalogData(true, true))->isAnythingEnabled());
         $this->assertFalse((new CatalogData(false, false, false, [], [$this->view('a')]))->isAnythingEnabled());
         $this->assertTrue((new CatalogData(true, false, false, [], [$this->view('a')]))->isAnythingEnabled());
+    }
+
+    public function testPopupCandidatesStopAtTheFirstOneWithoutAudienceRules(): void
+    {
+        $result = Eligibility::select($this->catalog([
+            $this->view('top', 'popup', 9, audience: ['visitor' => 'new']),
+            $this->view('mobile', 'popup', 7, audience: ['devices' => ['mobile']]),
+            $this->view('everyone', 'popup', 5),
+            $this->view('unreachable', 'popup', 1),
+        ]), 1);
+
+        $this->assertSame(['top', 'mobile', 'everyone'], $this->ids($result['popups']));
+        $this->assertSame('top', $result['popup']->id);
+    }
+
+    public function testWithoutAudienceRulesThereIsOneCandidate(): void
+    {
+        $result = Eligibility::select($this->catalog([
+            $this->view('a', 'popup', 2),
+            $this->view('b', 'popup', 1),
+        ]), 1);
+
+        $this->assertSame(['a'], $this->ids($result['popups']));
+    }
+
+    public function testNoPopupsMeansNoCandidates(): void
+    {
+        $result = Eligibility::select($this->catalog([$this->view('b1')]), 1);
+
+        $this->assertSame([], $result['popups']);
+        $this->assertNull($result['popup']);
+    }
+
+    public function testBannersWithAudienceRulesAreStillSelected(): void
+    {
+        $result = Eligibility::select($this->catalog([
+            $this->view('plain'),
+            $this->view('targeted', audience: ['visitor' => 'returning']),
+        ]), 1);
+
+        $this->assertSame(['plain', 'targeted'], $this->ids($result['banners']));
     }
 }

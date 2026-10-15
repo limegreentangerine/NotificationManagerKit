@@ -8,6 +8,19 @@ class NMBanner extends HTMLElement {
 		this.storage = window.NotificationManager.storage;
 		this.items = [...this.querySelectorAll('.nm-banner__item')];
 
+		// Targeted banners arrive hidden and are only revealed for the visitors they are for.
+		this.items.forEach((item) => {
+			if (item.dataset.audience === undefined) return;
+
+			const audience = window.NotificationManager.audience;
+			if (audience && audience.matchesJson(item.dataset.audience)) {
+				item.hidden = false;
+			} else {
+				item.remove();
+			}
+		});
+		this.items = this.items.filter((item) => item.isConnected);
+
 		this.items.forEach((item) => {
 			if (this.storage.isDismissed(item.dataset.id, item.dataset.version)) {
 				item.remove();

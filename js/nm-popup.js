@@ -10,6 +10,23 @@ class NMPopup extends HTMLElement {
 
 		if (!this.dialog || !this.config || typeof this.dialog.showModal !== 'function') return;
 
+		// Targeted popups check the visitor first; without the audience script they fail closed.
+		if (this.config.audience) {
+			const audience = window.NotificationManager.audience;
+			if (!audience || !audience.matches(this.config.audience)) {
+				this.remove();
+				return;
+			}
+		}
+
+		// One popup per page. The server may send several in priority order when audience rules apply;
+		// the first that is for this visitor wins, and a popup the visitor has closed is not replaced by the next.
+		if (document.querySelector('[data-nm-claimed]')) {
+			this.remove();
+			return;
+		}
+		this.setAttribute('data-nm-claimed', '');
+
 		this.storage = window.NotificationManager.storage;
 		this.fired = false;
 
@@ -21,7 +38,10 @@ class NMPopup extends HTMLElement {
 		);
 
 		if (this.suppressed && !this.config.click) {
-			this.remove();
+			// Leave a marker so the claim survives: the next popup in line must not replace one the visitor already closed.
+			const marker = document.createElement('template');
+			marker.setAttribute('data-nm-claimed', '');
+			this.replaceWith(marker);
 			return;
 		}
 

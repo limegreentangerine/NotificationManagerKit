@@ -4,7 +4,7 @@ namespace NotificationManagerKit\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use ClassKit\Entity\Core\UpdatedGuidEntity;
-use NotificationManagerKit\Support\Schedule;
+use NotificationManagerKit\Support\{Audience, Schedule};
 use Doctrine\Common\Collections\{ArrayCollection, Collection};
 
 /**
@@ -90,6 +90,11 @@ abstract class AbstractNotification extends UpdatedGuidEntity
      */
     protected $displayScope = 'all';
 
+    /**
+     * @ORM\Column(name="audienceRules", type="text", nullable=true, options={"comment": "JSON audience rules evaluated in the browser; null means everyone"})
+     */
+    protected $audience;
+
     public function __construct()
     {
         parent::__construct();
@@ -125,6 +130,7 @@ abstract class AbstractNotification extends UpdatedGuidEntity
         $copy->endDate = $this->endDate === null ? null : \DateTime::createFromInterface($this->endDate);
         $copy->repeatEvent = $this->repeatEvent;
         $copy->displayScope = $this->displayScope;
+        $copy->audience = $this->audience;
         $copy->setPageIds($this->getPageIds());
 
         foreach ($this->data as $content) {
@@ -301,6 +307,18 @@ abstract class AbstractNotification extends UpdatedGuidEntity
     public function setDisplayScope($displayScope): self
     {
         $this->displayScope = isset(self::DISPLAY_SCOPES[$displayScope]) ? $displayScope : 'all';
+
+        return $this;
+    }
+
+    public function getAudience(): Audience
+    {
+        return Audience::fromJson($this->audience);
+    }
+
+    public function setAudience(Audience $audience): self
+    {
+        $this->audience = $audience->toJson();
 
         return $this;
     }

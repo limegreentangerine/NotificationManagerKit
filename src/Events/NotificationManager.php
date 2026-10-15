@@ -46,6 +46,7 @@ class NotificationManager
         $list->register('css', 'notification-manager-kit/banner', 'css/nm-banner.css', $options, self::PACKAGE);
         $list->register('css', 'notification-manager-kit/popup', 'css/nm-popup.css', $options, self::PACKAGE);
         $list->register('javascript', 'notification-manager-kit/storage', 'js/nm-storage.js', $options, self::PACKAGE);
+        $list->register('javascript', 'notification-manager-kit/audience', 'js/nm-audience.js', $options, self::PACKAGE);
         $list->register('javascript', 'notification-manager-kit/banner', 'js/nm-banner.js', $options, self::PACKAGE);
         $list->register('javascript', 'notification-manager-kit/popup', 'js/nm-popup.js', $options, self::PACKAGE);
     }
@@ -57,6 +58,7 @@ class NotificationManager
         }
 
         $controller->requireAsset('javascript', 'notification-manager-kit/storage');
+        $controller->requireAsset('javascript', 'notification-manager-kit/audience');
         $controller->requireAsset('javascript', 'notification-manager-kit/' . $type);
     }
 
@@ -91,8 +93,11 @@ class NotificationManager
             self::hookOutput();
         }
 
-        if ($selected['popup'] !== null) {
-            $controller->addFooterItem(self::render('popup', ['popup' => $selected['popup']]));
+        if ($selected['popups'] !== []) {
+            // In priority order. With audience rules the browser keeps the first popup that applies to the visitor.
+            foreach ($selected['popups'] as $popup) {
+                $controller->addFooterItem(self::render('popup', ['popup' => $popup]));
+            }
             self::requireAssets($controller, $catalog, 'popup');
         }
     }

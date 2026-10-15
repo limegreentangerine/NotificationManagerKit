@@ -20,6 +20,10 @@ nm-banner {
 	display: grid;
 }
 
+.nm-banner__item[hidden] {
+	display: none;
+}
+
 .nm-banner__item {
 	position: relative;
 	display: flex;
