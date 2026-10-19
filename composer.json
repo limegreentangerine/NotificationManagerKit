@@ -14,7 +14,16 @@
 			"NotificationManagerKit\\Tests\\": "tests/"
 		}
 	},
-	"authors": [],
+	"authors": [
+		{
+			"name": "Dave Hendy",
+			"email": "david@limegreentangerine.co.uk"
+		},
+		{
+			"name": "Hannah Johns",
+			"email": "hannah@limegreentangerine.co.uk"
+		}
+	],
 	"require": {
 		"limegreentangerine/class_kit": "^1.0",
 		"openspout/openspout": "^5.12",
