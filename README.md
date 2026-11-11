@@ -138,7 +138,7 @@ session, so the new **Statistics** item appears once they sign out and back in.
 - Access to the private Composer registry at
   `https://packages.limegreentangerine.net` to install private dependencies.
 
-Requires `limegreentangerine/class_kit`. Developed against Concrete CMS 9.2 and PHPUnit 11.
+Requires `limegreentangerine/class_kit` (1.x or 2.x). Developed against Concrete CMS 9.2 and PHPUnit 11.
 
 ## Install
 
