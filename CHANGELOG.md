@@ -2,6 +2,19 @@
 
 Notable changes to this project are documented here.
 
+## 1.1.0
+
+### Changed
+
+- New package icon: a lime green bell with a notification dot on a dark teal
+  background, matching the style of the other Kit packages.
+- Now accepts `limegreentangerine/class_kit` 2.x as well as 1.x. The lock file
+  is updated to ClassKit 2.0.3.
+- The `package.json` repository, bugs and homepage URLs point at
+  NotificationManagerKit, and it lists the author and a contributor.
+- The package version is now 1.1.0. There are no functional changes and no
+  schema changes.
+
 ## 1.0.0
 
 First stable release. It brings together everything since 0.1.x, described in
